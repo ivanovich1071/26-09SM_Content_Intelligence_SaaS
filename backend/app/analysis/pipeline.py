@@ -46,7 +46,7 @@ async def pending_for_org(session: AsyncSession, org_id: int, gs: GlobalSource,
     stmt = (select(GlobalPost, GlobalSource).join(GlobalSource)
             .outerjoin(PostAnalysis, and_(PostAnalysis.post_id == GlobalPost.id,
                                           PostAnalysis.organization_id == org_id))
-            .where(GlobalPost.global_source_id == gs.id, GlobalPost.duplicate_of_id.is_(None),
+            .where(GlobalPost.global_source_id == gs.id, dedupe.not_hidden(org_id),
                    or_(GlobalPost.published_at.is_(None), GlobalPost.published_at >= since),
                    or_(PostAnalysis.id.is_(None), PostAnalysis.taxonomy_version < version,
                        and_(PostAnalysis.error.is_not(None), PostAnalysis.error != classify.NO_TEXT)))

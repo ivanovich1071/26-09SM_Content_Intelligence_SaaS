@@ -7,7 +7,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.openrouter import AIError
-from app.analysis import pipeline, taxonomy
+from app.analysis import dedupe, pipeline, taxonomy
 from app.core.config import settings
 from app.core.db import get_session, utcnow
 from app.core.deps import Tenant, get_tenant, require_role
@@ -86,7 +86,8 @@ async def overview(days: int = 30, tenant: Tenant = Depends(get_tenant), session
             .join(Source, and_(Source.global_source_id == GlobalSource.id, Source.organization_id == tenant.org_id))
             .outerjoin(PostAnalysis, and_(PostAnalysis.post_id == GlobalPost.id,
                                           PostAnalysis.organization_id == tenant.org_id))
-            .where(GlobalPost.published_at >= since, GlobalPost.duplicate_of_id.is_(None), Source.enabled.is_(True)))
+            .where(GlobalPost.published_at >= since, dedupe.not_hidden(tenant.org_id),
+                   Source.enabled.is_(True)))
     rows = (await session.execute(base)).all()
 
     by_role: dict[str, dict] = {}

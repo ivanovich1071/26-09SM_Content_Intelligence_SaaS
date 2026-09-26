@@ -20,8 +20,7 @@ def embed_text(p: GlobalPost) -> str:
 async def pending(session: AsyncSession, gs: GlobalSource) -> list[GlobalPost]:
     rows = (await session.execute(
         select(GlobalPost).outerjoin(PostEmbedding, PostEmbedding.post_id == GlobalPost.id)
-        .where(GlobalPost.global_source_id == gs.id, PostEmbedding.post_id.is_(None),
-               GlobalPost.duplicate_of_id.is_(None))
+        .where(GlobalPost.global_source_id == gs.id, PostEmbedding.post_id.is_(None))
         .order_by(GlobalPost.published_at.desc().nulls_last()).limit(settings.embed_max_posts_per_job))).scalars()
     return [p for p in rows if len(embed_text(p).strip()) >= MIN_TEXT]
 
@@ -48,3 +47,18 @@ async def embed_source(session: AsyncSession, gs: GlobalSource, provider: Embedd
         await session.commit()
         done.extend(p.id for p in batch)
     return done
+
+
+async def embed_query(session: AsyncSession, provider: EmbeddingProvider, text: str, *, org_id: int) -> list[float]:
+    """Вектор поискового запроса для семантического поиска в Ленте. Расход — на организацию."""
+    await quotas.check(session, org_id, "ai_cost_usd_month", amount=0)
+    result = await provider.embed([text[:MAX_CHARS]])
+    cost = result.cost_usd
+    session.add(LLMRequest(organization_id=org_id, task="embed", operation="search_query", provider=provider.name,
+                           model=result.model, input_tokens=result.usage.get("prompt_tokens"), cost_usd=cost,
+                           ok=True))
+    if cost:
+        await usage.record(session, org_id, "ai_cost_usd", "search_query", cost, provider=provider.name,
+                           model=result.model, cost_usd=cost, commit=False)
+    await session.commit()
+    return result.vectors[0]

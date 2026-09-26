@@ -140,6 +140,36 @@ export type Post = {
   duplicate_of_id: number | null;
   has_embedding: boolean;
   analysis: PostAnalysis | null;
+  source?: SourceBrief;
+};
+export type SourceBrief = {
+  id: number;
+  name: string;
+  kind: SourceKind;
+  role: SourceRole;
+  competitor_id: number | null;
+  competitor_name: string | null;
+};
+export type FeedPage = { items: Post[]; next_cursor: string | null; search_mode: string | null; notice: string | null };
+export type Insight = {
+  summary: string;
+  hook: string;
+  pain_point: string;
+  audience: string;
+  argumentation: string;
+  cta: string;
+  format_notes: string;
+  why_it_worked: string;
+  patterns_to_use: string[];
+  do_not_copy: string[];
+};
+export type PostDetail = {
+  post: Post;
+  source_median_views: number | null;
+  source_median_engagement: number | null;
+  insight: Insight | null;
+  insight_at: string | null;
+  similar: Post[];
 };
 export type PostAnalysis = {
   content_type: string | null;

@@ -141,7 +141,7 @@ function Market() {
                         {p.topic && <span>{p.topic}</span>}
                         {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="text-accent hover:underline">открыть</a>}
                       </div>
-                      <p className="line-clamp-2">{p.summary || p.text}</p>
+                      <Link href={`/feed/${p.id}`} className="line-clamp-2 hover:text-accent">{p.summary || p.text}</Link>
                     </li>
                   ))}
                 </ul>

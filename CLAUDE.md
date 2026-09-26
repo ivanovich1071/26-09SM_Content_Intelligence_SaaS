@@ -53,10 +53,12 @@ backend/app/
                  embed.py, pipeline.py (задача analyze_source), router.py (/taxonomy, /market/overview)
   competitors/   stats.py (статистика контента кодом), profile.py (Competitor Analyst, задача profile_competitor),
                  router.py (/competitors, /discover, /{id}/sources|profile|posts)
+  posts/         router.py (/posts — лента с фильтрами и курсором, /posts/{id}, /posts/{id}/analyze), insight.py
+                 (AI-разбор поста, кэш post_insights)
   sources/       service.py (resolve/global_source/start_sync — общий для /sources и конкурентов), sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
                  analyze_source → profile_competitor)
-backend/migrations/versions/0001_saas_core.py … 0004_competitors.py
+backend/migrations/versions/0001_saas_core.py … 0005_post_insights.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы>
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
@@ -78,8 +80,9 @@ frontend/src/
   видит их через свою `sources`. Посты читать только через `Source` организации. Сеть в коннекторах — только через
   `Fetcher` (лимит на домен, SSRF-защита); в тестах — `httpx.MockTransport` и `check_hosts=False`.
 - **Разметка:** `post_analysis` — tenant-таблица (у каждой организации своя таксономия); эмбеддинги и метрики поста
-  общие. Правка таксономии повышает `version` — посты старой версии переразмечаются. Дубли (`duplicate_of_id`)
-  не размечаются и не векторизуются. Промпты — `ai/prompts/<агент>/*.md`, загрузка `prompts.load("classifier/system")`.
+  общие. Правка таксономии повышает `version` — посты старой версии переразмечаются. Дубль (`duplicate_of_id`)
+  скрывается и не размечается только для организации, которой виден оригинал — фильтр `dedupe.not_hidden(org_id)`
+  обязателен во всех выборках постов. Промпты — `ai/prompts/<агент>/*.md`, загрузка `prompts.load("classifier/system")`.
 - **Долгие операции:** `jobs.service.create_job` + `enqueue`, обработчик — через `workers.tasks.run_job`.
 - **Числа считает код**, модель интерпретирует; при нехватке данных — явно «Недостаточно данных».
 - Промпты — в `backend/app/ai/prompts/<агент>/`.
@@ -118,4 +121,6 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
   UI «Компания» и блок рынка на «Обзоре», 111 тестов
 - ✅ EPIC 4 — Конкуренты: CRUD, автопоиск соцсетей на сайте, AI-профиль, аналитика и таймлайн по неделям,
   коннекторы YouTube (без ключа) и VK (VK_SERVICE_TOKEN), UI список + карточка, 139 тестов
-- 🔲 Далее: EPIC 5 — Лента (см. `ROADMAP.md`)
+- ✅ EPIC 5 — Лента: фильтры, курсорная пагинация, поиск по смыслу и по словам, карточка поста (метрики к
+  медиане, похожие посты), AI-разбор с кэшем, 151 тест
+- 🔲 Далее: EPIC 6 — Темы + Content Gaps (см. `ROADMAP.md`)

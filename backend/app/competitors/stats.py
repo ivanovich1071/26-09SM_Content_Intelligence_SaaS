@@ -7,6 +7,7 @@ from statistics import median
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.analysis import dedupe
 from app.core.db import utcnow
 from app.models import GlobalPost, GlobalSource, PostAnalysis, Source
 
@@ -33,7 +34,7 @@ async def rows_for(session: AsyncSession, org_id: int, source_ids: list[int], da
             .join(Source, and_(Source.global_source_id == GlobalSource.id, Source.organization_id == org_id))
             .outerjoin(PostAnalysis, and_(PostAnalysis.post_id == GlobalPost.id,
                                           PostAnalysis.organization_id == org_id))
-            .where(Source.id.in_(source_ids), GlobalPost.published_at >= since, GlobalPost.duplicate_of_id.is_(None))
+            .where(Source.id.in_(source_ids), GlobalPost.published_at >= since, dedupe.not_hidden(org_id))
             .order_by(GlobalPost.published_at.desc()))
     return (await session.execute(stmt)).all()
 
