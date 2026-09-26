@@ -2,12 +2,13 @@
 import re
 
 from app.connectors.base import InvalidSource, SourceConnector
+from app.connectors.instagram import InstagramConnector
 from app.connectors.rss import RSSConnector
 from app.connectors.telegram import TelegramConnector
 from app.connectors.website import WebsiteConnector
 
 CONNECTORS: dict[str, SourceConnector] = {
-    c.kind: c for c in (TelegramConnector(), WebsiteConnector(), RSSConnector())
+    c.kind: c for c in (TelegramConnector(), WebsiteConnector(), RSSConnector(), InstagramConnector())
 }
 
 FEED_HINT = re.compile(r"(/feed|/rss|/atom|\.rss|\.xml)(/|$|\?)", re.I)
@@ -18,8 +19,10 @@ def get_connector(kind: str) -> SourceConnector:
 
 
 def detect_kind(raw: str) -> str:
-    """Тип по адресу без сети: t.me и @канал → telegram, адрес ленты → rss, иначе сайт."""
+    """Тип по адресу без сети: t.me и @канал → telegram, instagram.com → instagram, адрес ленты → rss, иначе сайт."""
     raw = raw.strip()
+    if re.match(r"^(https?://)?(www\.)?instagram\.com/", raw, re.I):
+        return "instagram"
     if raw.startswith("@") or re.match(r"^(https?://)?(www\.)?(t|telegram)\.me/", raw, re.I):
         return "telegram"
     if FEED_HINT.search(raw):

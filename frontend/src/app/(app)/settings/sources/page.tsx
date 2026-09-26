@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Globe, Loader2, RefreshCw, Rss, Send, Trash2 } from "lucide-react";
+import { Camera, ChevronDown, ChevronRight, Globe, Loader2, RefreshCw, Rss, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ComingSoon";
 import { api, type Post, type Source, type SourceKind, type SourceRole, type SourceStatus } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-const KIND_ICON = { telegram: Send, website: Globe, rss: Rss } satisfies Record<SourceKind, unknown>;
-const KIND_LABELS: Record<SourceKind, string> = { telegram: "Telegram", website: "Сайт", rss: "RSS" };
+const KIND_ICON = { telegram: Send, website: Globe, rss: Rss, instagram: Camera } satisfies Record<SourceKind, unknown>;
+const KIND_LABELS: Record<SourceKind, string> = { telegram: "Telegram", website: "Сайт", rss: "RSS", instagram: "Instagram" };
 const ROLE_LABELS: Record<SourceRole, string> = { own: "Свой", competitor: "Конкурент", market: "Рынок" };
 const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
   new: { label: "Ожидает сбора", cls: "text-muted" },
@@ -111,14 +111,14 @@ export default function SourcesPage() {
     <>
       <PageHeader
         title="Источники"
-        subtitle="Каналы и сайты, которые собираем: ваши, конкурентов и рынка. Telegram и RSS обновляются ежедневно, сайты — еженедельно."
+        subtitle="Каналы и сайты, которые собираем: ваши, конкурентов и рынка. Telegram и RSS обновляются ежедневно, сайты и Instagram — еженедельно."
       />
 
       {canManage && (
         <form onSubmit={add} className="card mb-4 flex flex-wrap items-end gap-3">
           <div className="min-w-72 flex-1">
             <label className="label" htmlFor="url">Адрес</label>
-            <input id="url" name="url" required className="input" placeholder="t.me/канал, @канал, сайт.by или ссылка на RSS" />
+            <input id="url" name="url" required className="input" placeholder="t.me/канал, instagram.com/профиль, сайт.by или ссылка на RSS" />
           </div>
           <div>
             <label className="label" htmlFor="kind">Тип</label>
@@ -162,7 +162,7 @@ export default function SourcesPage() {
                     <a href={s.url} target="_blank" rel="noreferrer" className="text-xs text-muted hover:text-accent">{s.url}</a>
                     <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
                       <span className={STATUS[s.status].cls}>{STATUS[s.status].label}</span>
-                      {s.kind === "telegram" && <span>Подписчики: {fmtNum(s.followers)}</span>}
+                      {(s.kind === "telegram" || s.kind === "instagram") && <span>Подписчики: {fmtNum(s.followers)}</span>}
                       <span>Постов: {fmtNum(s.posts_count)}</span>
                       <span className="text-muted">Обновлён: {fmtDate(s.last_synced_at)}</span>
                     </div>

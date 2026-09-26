@@ -45,7 +45,8 @@ backend/app/
                  схема, учёт), embeddings.py, prompts/
   jobs/          service (create/enqueue/set_status), /jobs, /jobs/ping, /jobs/{id}/cancel
   connectors/    base.py (SourceConnector, ContentItem, canonical_url, content_hash), http.py (Fetcher: лимит
-                 на домен через Redis, запрет внутренних адресов), telegram.py (t.me/s из VM_SM), rss.py, website.py
+                 на домен через Redis, запрет внутренних адресов), telegram.py (t.me/s из VM_SM), rss.py, website.py,
+                 instagram.py (Apify, APIFY_TOKEN)
   sources/       sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source)
 backend/migrations/versions/0001_saas_core.py, 0002_sources.py
@@ -99,6 +100,6 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
 - ✅ EPIC 0 — аудит VM_SM (`docs/vmsm-audit/`)
 - ✅ EPIC 1 — SaaS Core: регистрация, JWT, организации, роли, приглашения, тарифы и квоты, usage, AI Router,
   jobs + arq-воркер, `/health`, фронт (вход, меню всех вкладок, Команда, Тариф, Использование), 28 тестов, CI
-- ✅ EPIC 2 — Source Layer: коннекторы Telegram / сайт / RSS, `/sources`, задача `sync_source`, cron
-  (Telegram и RSS — ежедневно, сайты — еженедельно), UI «Настройки → Источники», 82 теста
+- ✅ EPIC 2 — Source Layer: коннекторы Telegram / сайт / RSS / Instagram (Apify), `/sources`, задача `sync_source`, cron
+  (Telegram и RSS — ежедневно, сайты и Instagram — еженедельно), UI «Настройки → Источники», 95 тестов
 - 🔲 Далее: EPIC 3 — Market Intelligence (см. `ROADMAP.md`)

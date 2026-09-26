@@ -81,6 +81,7 @@ class Fetcher:
                  check_hosts: bool = True):
         self.limiter = limiter or DomainRateLimiter()
         self.check_hosts = check_hosts
+        self.cache: dict = {}  # данные в пределах одной задачи (например, ответ Apify для профиля и постов)
         self.client = httpx.AsyncClient(headers={"User-Agent": settings.user_agent}, timeout=30,
                                         follow_redirects=False, transport=transport)
 
@@ -89,6 +90,18 @@ class Fetcher:
 
     async def __aexit__(self, *exc) -> None:
         await self.client.aclose()
+
+    async def post(self, url: str, *, json: dict, headers: dict | None = None,
+                   timeout: float | None = None) -> httpx.Response:
+        """Для API-провайдеров с фиксированным адресом (Apify): без редиректов и лимита размера."""
+        if self.check_hosts:
+            await ensure_public_host(url)
+        await self.limiter.wait(urlsplit(url).hostname or "")
+        try:
+            return await self.client.post(url, json=json, headers=headers,
+                                          timeout=timeout if timeout is not None else self.client.timeout)
+        except httpx.HTTPError as e:
+            raise FetchError(f"Ошибка сети: {type(e).__name__}") from e
 
     async def get(self, url: str, *, follow_redirects: bool = True) -> httpx.Response:
         """Редиректы проходим вручную, чтобы проверить каждый адрес. Тело режется по fetch_max_bytes."""

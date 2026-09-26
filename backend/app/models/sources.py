@@ -26,6 +26,7 @@ class SourceKind(enum.StrEnum):
     telegram = "telegram"
     website = "website"
     rss = "rss"
+    instagram = "instagram"
 
 
 class SourceRole(enum.StrEnum):

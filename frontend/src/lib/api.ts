@@ -97,7 +97,7 @@ export type Job = {
   error: string | null;
   created_at: string;
 };
-export type SourceKind = "telegram" | "website" | "rss";
+export type SourceKind = "telegram" | "website" | "rss" | "instagram";
 export type SourceRole = "own" | "competitor" | "market";
 export type SourceStatus = "new" | "ok" | "error" | "unavailable";
 export type Source = {

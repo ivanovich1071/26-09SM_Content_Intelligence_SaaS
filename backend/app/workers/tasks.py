@@ -47,7 +47,7 @@ async def sync_source(ctx: dict, job_id: int) -> None:
 
 
 async def schedule_syncs(ctx: dict) -> None:
-    """Cron: Telegram и RSS — раз в сутки, сайты — раз в неделю (см. sync.SYNC_INTERVAL)."""
+    """Cron: Telegram и RSS — раз в сутки, сайты и Instagram — раз в неделю (см. sync.SYNC_INTERVAL)."""
     async with SessionLocal() as session:
         created = await sync.schedule_due(session, ctx.get("redis"))
     if created:
