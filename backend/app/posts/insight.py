@@ -28,7 +28,8 @@ class Insight(BaseModel):
 
 async def cached(session: AsyncSession, org_id: int, post_id: int) -> PostInsight | None:
     return (await session.execute(select(PostInsight).where(
-        PostInsight.organization_id == org_id, PostInsight.post_id == post_id))).scalar_one_or_none()
+        PostInsight.organization_id == org_id, PostInsight.post_id == post_id)
+        .execution_options(populate_existing=True))).scalar_one_or_none()  # после upsert — свежие данные
 
 
 def user_prompt(post: GlobalPost, gs: GlobalSource, source: Source, analysis: PostAnalysis | None) -> str:

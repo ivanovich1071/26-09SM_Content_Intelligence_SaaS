@@ -10,6 +10,7 @@ from app.core.db import SessionLocal
 from app.jobs.service import set_status
 from app.models import Job, JobStatus
 from app.sources import sync
+from app.topics import cluster
 
 log = logging.getLogger("sm.worker")
 
@@ -64,3 +65,15 @@ async def schedule_syncs(ctx: dict) -> None:
         created = await sync.schedule_due(session, ctx.get("redis"))
     if created:
         log.info("Запланировано синхронизаций: %s", created)
+
+
+async def cluster_topics(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, cluster.handle_cluster_topics)
+
+
+async def schedule_clustering(ctx: dict) -> None:
+    """Cron: раз в сутки — под-темы организаций, у которых они старше недели или ещё не считались."""
+    async with SessionLocal() as session:
+        created = await cluster.schedule_due(session, ctx.get("redis"))
+    if created:
+        log.info("Запланирован пересчёт под-тем: %s", created)

@@ -21,6 +21,7 @@ from app.jobs.router import router as jobs_router
 from app.organizations.router import router as org_router
 from app.posts.router import router as posts_router
 from app.sources.router import router as sources_router
+from app.topics.router import router as topics_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("sm")
@@ -47,7 +48,8 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_cr
 
 api = APIRouter(prefix="/api/v1")
 for r in (auth_router, org_router, billing_router, jobs_router, sources_router, taxonomy_router,
-          market_router, competitors_router, posts_router):
+          market_router, competitors_router, posts_router,
+          topics_router):
     api.include_router(r)
 app.include_router(api)
 

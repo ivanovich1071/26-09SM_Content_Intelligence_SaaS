@@ -64,7 +64,7 @@ class PostDetail(BaseModel):
     similar: list[FeedPost]
 
 
-def _base(org_id: int) -> Select:
+def feed_query(org_id: int) -> Select:
     return (select(GlobalPost, PostAnalysis, Source, GlobalSource, Competitor.name,
                    PostEmbedding.post_id.is_not(None).label("has_emb"))
             .join(GlobalSource, GlobalSource.id == GlobalPost.global_source_id)
@@ -75,7 +75,7 @@ def _base(org_id: int) -> Select:
             .outerjoin(Competitor, Competitor.id == Source.competitor_id))
 
 
-def _feed_post(row) -> FeedPost:
+def feed_post(row) -> FeedPost:
     p, a, s, gs, comp_name, has_emb = row[:6]
     base = post_out(p, a, bool(has_emb))
     return FeedPost(**base.model_dump(), source=SourceBrief(
@@ -129,7 +129,7 @@ async def feed(
     sort: Sort = "recent", include_duplicates: bool = False, limit: int = Query(default=30, ge=1, le=100),
     cursor: str | None = None,
 ):
-    stmt = _base(tenant.org_id)
+    stmt = feed_query(tenant.org_id)
     conds = []
     if not include_duplicates:
         conds.append(dedupe.not_hidden(tenant.org_id))
@@ -186,12 +186,12 @@ async def feed(
         if len(rows) > limit:
             last = rows[limit - 1][0]
             next_cursor = _encode({"v": _key_value(sort, last), "id": last.id})
-    return FeedPage(items=[_feed_post(r) for r in rows[:limit]], next_cursor=next_cursor, search_mode=mode,
+    return FeedPage(items=[feed_post(r) for r in rows[:limit]], next_cursor=next_cursor, search_mode=mode,
                     notice=notice)
 
 
 async def _visible(session: AsyncSession, org_id: int, post_id: int):
-    row = (await session.execute(_base(org_id).where(GlobalPost.id == post_id).limit(1))).first()
+    row = (await session.execute(feed_query(org_id).where(GlobalPost.id == post_id).limit(1))).first()
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Не найдено")
     return row
@@ -208,13 +208,13 @@ async def post_detail(post_id: int, tenant: Tenant = Depends(get_tenant),
                ).scalar_one()
         distance = PostEmbedding.embedding.cosine_distance(vec)
         similar = (await session.execute(
-            _base(tenant.org_id).where(GlobalPost.id != post_id, dedupe.not_hidden(tenant.org_id),
+            feed_query(tenant.org_id).where(GlobalPost.id != post_id, dedupe.not_hidden(tenant.org_id),
                                        PostEmbedding.post_id.is_not(None))
             .order_by(distance).limit(5))).all()
     cached = await insights.cached(session, tenant.org_id, post_id)
-    return PostDetail(post=_feed_post(row), source_median_views=gs.median_views,
+    return PostDetail(post=feed_post(row), source_median_views=gs.median_views,
                       source_median_engagement=gs.median_engagement, insight=cached.data if cached else None,
-                      insight_at=cached.created_at if cached else None, similar=[_feed_post(r) for r in similar])
+                      insight_at=cached.created_at if cached else None, similar=[feed_post(r) for r in similar])
 
 
 @router.post("/{post_id}/analyze", response_model=PostDetail)
