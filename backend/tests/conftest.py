@@ -7,6 +7,7 @@ os.environ["OPENROUTER_API_KEY"] = ""
 
 import pytest  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
+from sqlalchemy import text  # noqa: E402
 
 from app import models  # noqa: E402, F401
 from app.billing.plans import sync_plans  # noqa: E402
@@ -17,6 +18,7 @@ from app.main import app  # noqa: E402
 @pytest.fixture(scope="session", autouse=True)
 async def database():
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     async with SessionLocal() as session:
@@ -54,6 +56,9 @@ class Account:
 
     async def patch(self, url, **kw):
         return await self.client.patch(url, headers=self.headers, **kw)
+
+    async def put(self, url, **kw):
+        return await self.client.put(url, headers=self.headers, **kw)
 
     async def delete(self, url, **kw):
         return await self.client.delete(url, headers=self.headers, **kw)

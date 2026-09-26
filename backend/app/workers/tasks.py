@@ -4,6 +4,8 @@ from collections.abc import Awaitable, Callable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.analysis import pipeline
+from app.competitors import profile
 from app.core.db import SessionLocal
 from app.jobs.service import set_status
 from app.models import Job, JobStatus
@@ -44,6 +46,16 @@ async def ping(ctx: dict, job_id: int) -> None:
 
 async def sync_source(ctx: dict, job_id: int) -> None:
     await run_job(job_id, sync.handle_sync_source)
+    await pipeline.after_sync(job_id, ctx.get("redis"))
+
+
+async def analyze_source(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, pipeline.handle_analyze_source)
+    await profile.after_analysis(job_id, ctx.get("redis"))
+
+
+async def profile_competitor(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, profile.handle_profile_competitor)
 
 
 async def schedule_syncs(ctx: dict) -> None:

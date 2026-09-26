@@ -103,6 +103,7 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 |-----|------|
 | `sync_source` | collect → normalize → dedupe → save → enqueue(classify, embed, metrics) |
 | `crawl_website` | fetch pages → extract text/articles → snapshot → diff → AI смысл изменения |
+| `analyze_source` (реализовано, EPIC 3) | метрики → точные дубли → разметка (пачки по 10) → эмбеддинги → смысловые дубли |
 | `classify_posts` | пачки по 20 → Classifier → валидация → `post_analysis` |
 | `generate_embeddings` | тексты без эмбеддинга → EmbeddingProvider → pgvector |
 | `cluster_topics` | эмбеддинги за 90 дней → кластеризация → Topic Analyst → `topics` |
@@ -134,6 +135,9 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 
 Реализовано в миграции 0001: organizations, users, memberships, plans, subscriptions, usage_events, jobs, llm_requests.
 Миграция 0002: global_sources, sources, global_posts, post_metrics.
+Миграция 0004: competitors, sources.competitor_id, source_kind += youtube, vk.
+Миграция 0003: taxonomies, post_analysis, post_embeddings (vector(1536), HNSW cosine); метрики в global_posts
+(engagement, er, overperformance, duplicate_of_id) и базовая линия в global_sources (median_views, median_engagement).
 
 ## 7. Мультитенантность
 1. JWT содержит `sub` (user_id); активная организация — заголовок `X-Organization-Id` (или первая доступная).

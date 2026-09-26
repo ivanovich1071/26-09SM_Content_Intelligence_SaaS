@@ -9,9 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 from sqlalchemy import text
 
+from app.analysis.router import market_router
+from app.analysis.router import router as taxonomy_router
 from app.auth.router import router as auth_router
 from app.billing.plans import sync_plans
 from app.billing.router import router as billing_router
+from app.competitors.router import router as competitors_router
 from app.core.config import settings
 from app.core.db import SessionLocal
 from app.jobs.router import router as jobs_router
@@ -42,7 +45,8 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_cr
                    allow_methods=["*"], allow_headers=["*"])
 
 api = APIRouter(prefix="/api/v1")
-for r in (auth_router, org_router, billing_router, jobs_router, sources_router):
+for r in (auth_router, org_router, billing_router, jobs_router, sources_router, taxonomy_router,
+          market_router, competitors_router):
     api.include_router(r)
 app.include_router(api)
 

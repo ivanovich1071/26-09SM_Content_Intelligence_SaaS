@@ -91,26 +91,27 @@ class Fetcher:
     async def __aexit__(self, *exc) -> None:
         await self.client.aclose()
 
-    async def post(self, url: str, *, json: dict, headers: dict | None = None,
-                   timeout: float | None = None) -> httpx.Response:
-        """Для API-провайдеров с фиксированным адресом (Apify): без редиректов и лимита размера."""
+    async def post(self, url: str, *, json: dict | None = None, data: dict | None = None,
+                   headers: dict | None = None, timeout: float | None = None) -> httpx.Response:
+        """Для API-провайдеров с фиксированным адресом (Apify, VK): без редиректов и лимита размера.
+        Токены передавать в теле или заголовке, не в URL — httpx пишет URL запросов в лог."""
         if self.check_hosts:
             await ensure_public_host(url)
         await self.limiter.wait(urlsplit(url).hostname or "")
         try:
-            return await self.client.post(url, json=json, headers=headers,
+            return await self.client.post(url, json=json, data=data, headers=headers,
                                           timeout=timeout if timeout is not None else self.client.timeout)
         except httpx.HTTPError as e:
             raise FetchError(f"Ошибка сети: {type(e).__name__}") from e
 
-    async def get(self, url: str, *, follow_redirects: bool = True) -> httpx.Response:
+    async def get(self, url: str, *, follow_redirects: bool = True, headers: dict | None = None) -> httpx.Response:
         """Редиректы проходим вручную, чтобы проверить каждый адрес. Тело режется по fetch_max_bytes."""
         for _ in range(MAX_REDIRECTS + 1):
             if self.check_hosts:
                 await ensure_public_host(url)
             await self.limiter.wait(urlsplit(url).hostname or "")
             try:
-                async with self.client.stream("GET", url) as resp:
+                async with self.client.stream("GET", url, headers=headers) as resp:
                     chunks, size = [], 0
                     async for chunk in resp.aiter_bytes():
                         chunks.append(chunk)

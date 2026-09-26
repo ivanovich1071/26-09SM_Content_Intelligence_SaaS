@@ -39,8 +39,8 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 export const SETTINGS_NAV: NavItem[] = [
-  { href: "/settings/company", title: "Компания", icon: Building2, epic: 10,
-    description: "Профиль бренда: продукт, аудитория, позиционирование, основной CTA." },
+  { href: "/settings/company", title: "Компания", icon: Building2, epic: 3,
+    description: "Ниша, темы и роли аудитории — справочник, по которому размечается контент рынка." },
   { href: "/settings/sources", title: "Источники", icon: Plug, epic: 2,
     description: "Ваши каналы и сайты: Telegram, сайт, RSS, VK, YouTube, Instagram. Статус синхронизации." },
   { href: "/settings/brand-voice", title: "Brand Voice", icon: Mic2, epic: 10,

@@ -97,7 +97,7 @@ export type Job = {
   error: string | null;
   created_at: string;
 };
-export type SourceKind = "telegram" | "website" | "rss" | "instagram";
+export type SourceKind = "telegram" | "website" | "rss" | "instagram" | "youtube" | "vk";
 export type SourceRole = "own" | "competitor" | "market";
 export type SourceStatus = "new" | "ok" | "error" | "unavailable";
 export type Source = {
@@ -117,6 +117,9 @@ export type Source = {
   posts_count: number;
   meta: { feed_url?: string | null; social_links?: string[] };
   last_job: (Job & { finished_at: string | null }) | null;
+  last_analysis: (Job & { finished_at: string | null }) | null;
+  median_views: number | null;
+  analyzed_count: number;
   created_at: string;
 };
 export type Post = {
@@ -131,4 +134,118 @@ export type Post = {
   likes: number | null;
   comments: number | null;
   shares: number | null;
+  engagement: number | null;
+  er: number | null;
+  overperformance: number | null;
+  duplicate_of_id: number | null;
+  has_embedding: boolean;
+  analysis: PostAnalysis | null;
+};
+export type PostAnalysis = {
+  content_type: string | null;
+  funnel_stage: string | null;
+  hook_type: string | null;
+  cta_type: string | null;
+  proof_type: string | null;
+  tone: string | null;
+  value_type: string | null;
+  topic: string | null;
+  target_role: string | null;
+  has_case: boolean | null;
+  has_numbers: boolean | null;
+  has_offer: boolean | null;
+  has_lead_magnet: boolean | null;
+  summary: string | null;
+  error: string | null;
+};
+export type Taxonomy = {
+  topics: string[];
+  roles: string[];
+  niche: string | null;
+  version: number;
+  source: string | null;
+  is_default: boolean;
+  universal: Record<string, string[]>;
+  updated_at: string | null;
+};
+export type TaxonomySuggestion = {
+  niche: string;
+  topics: string[];
+  roles: string[];
+  rationale: string;
+  based_on: { sources: number; posts: number };
+};
+export type RoleStats = { posts: number; analyzed: number; median_er: number | null; posts_per_week: number };
+export type MarketOverview = {
+  days: number;
+  by_role: Record<SourceRole, RoleStats>;
+  topics: { topic: string; own: number; competitor: number; market: number; total: number }[];
+  top_posts: {
+    id: number;
+    source: string;
+    role: SourceRole;
+    url: string | null;
+    text: string;
+    published_at: string | null;
+    views: number | null;
+    er: number | null;
+    overperformance: number;
+    topic: string | null;
+    summary: string | null;
+  }[];
+};
+export type Share = { value: string; count: number; share: number };
+export type ContentStats = {
+  days: number;
+  posts: number;
+  analyzed: number;
+  posts_per_week: number;
+  median_views: number | null;
+  median_er: number | null;
+  formats: Share[];
+  topics: Share[];
+  content_types: Share[];
+  funnel: Share[];
+  hooks: Share[];
+  ctas: Share[];
+  tone: Share[];
+  cta_share: number | null;
+  case_share: number | null;
+  numbers_share: number | null;
+  offer_share: number | null;
+  lead_magnet_share: number | null;
+  weekly: { week: string; posts: number; median_er: number | null }[];
+};
+export type CompetitorProfile = {
+  summary: string;
+  positioning: string;
+  audience: string;
+  main_topics: string[];
+  formats: string[];
+  tone_of_voice: string;
+  posting_frequency: string;
+  ctas: string[];
+  content_patterns: string[];
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+};
+export type Competitor = {
+  id: number;
+  name: string;
+  website: string | null;
+  notes: string | null;
+  created_at: string;
+  sources: Source[];
+  stats: ContentStats;
+  profile: { stats: ContentStats; ai: CompetitorProfile } | null;
+  profile_at: string | null;
+  profile_job: (Job & { finished_at: string | null }) | null;
+};
+export type Discovery = {
+  website: string;
+  title: string | null;
+  description: string | null;
+  feed_url: string | null;
+  social_links: { url: string; kind: SourceKind | null; supported: boolean; needs_key: boolean }[];
 };

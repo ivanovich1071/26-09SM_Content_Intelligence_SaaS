@@ -1,13 +1,13 @@
 "use client";
 
-import { Camera, ChevronDown, ChevronRight, Globe, Loader2, RefreshCw, Rss, Send, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ComingSoon";
-import { api, type Post, type Source, type SourceKind, type SourceRole, type SourceStatus } from "@/lib/api";
+import { api, type Post, type Source, type SourceRole, type SourceStatus } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { PostList } from "@/components/PostList";
+import { fmtDate, fmtNum, KIND_ICON, KIND_LABELS } from "@/lib/format";
 
-const KIND_ICON = { telegram: Send, website: Globe, rss: Rss, instagram: Camera } satisfies Record<SourceKind, unknown>;
-const KIND_LABELS: Record<SourceKind, string> = { telegram: "Telegram", website: "Сайт", rss: "RSS", instagram: "Instagram" };
 const ROLE_LABELS: Record<SourceRole, string> = { own: "Свой", competitor: "Конкурент", market: "Рынок" };
 const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
   new: { label: "Ожидает сбора", cls: "text-muted" },
@@ -15,10 +15,8 @@ const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
   error: { label: "Ошибка", cls: "text-bad" },
   unavailable: { label: "Недоступен", cls: "text-warn" },
 };
-const ACTIVE = new Set(["queued", "running", "collecting"]);
+const ACTIVE = new Set(["queued", "running", "collecting", "analyzing"]);
 
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }) : "—");
-const fmtNum = (n: number | null) => (n === null ? "—" : n.toLocaleString("ru-RU"));
 
 function jobNote(s: Source): { text: string; cls: string } | null {
   const j = s.last_job;
@@ -35,30 +33,32 @@ function jobNote(s: Source): { text: string; cls: string } | null {
   return { text: [parts.join(", "), r.message].filter(Boolean).join(". "), cls: "text-muted" };
 }
 
+function analysisNote(s: Source): { text: string; cls: string } | null {
+  const j = s.last_analysis;
+  if (!j) return null;
+  if (ACTIVE.has(j.status)) {
+    return { text: j.status === "queued" ? "Анализ в очереди…" : `Анализируем… ${j.progress}%`, cls: "text-muted" };
+  }
+  if (j.status === "failed") return { text: `Анализ не удался: ${j.error ?? ""}`, cls: "text-bad" };
+  const r = j.result as {
+    classified?: number; no_text?: number; duplicates?: number; message?: string; classify_stopped?: string;
+    embed_error?: string;
+  } | null;
+  if (!r) return null;
+  const warn = r.message ?? r.classify_stopped ?? r.embed_error;
+  const parts = [`размечено: ${s.analyzed_count} из ${s.posts_count}`];
+  if (r.duplicates) parts.push(`дублей: ${r.duplicates}`);
+  return { text: [parts.join(", "), warn].filter(Boolean).join(". "), cls: warn ? "text-warn" : "text-muted" };
+}
+
+
 function Posts({ sourceId }: { sourceId: number }) {
   const [posts, setPosts] = useState<Post[] | null>(null);
   useEffect(() => {
     api<Post[]>(`/sources/${sourceId}/posts?limit=5`).then(setPosts).catch(() => setPosts([]));
   }, [sourceId]);
   if (posts === null) return <p className="text-sm text-muted">Загрузка…</p>;
-  if (posts.length === 0) return <p className="text-sm text-muted">Постов пока нет.</p>;
-  return (
-    <ul className="space-y-3">
-      {posts.map((p) => (
-        <li key={p.id} className="text-sm">
-          <div className="flex flex-wrap gap-x-3 text-xs text-muted">
-            <span>{fmtDate(p.published_at)}</span>
-            <span>{p.media_type}</span>
-            {p.views !== null && <span>просмотры {fmtNum(p.views)}</span>}
-            {p.likes !== null && <span>реакции {fmtNum(p.likes)}</span>}
-            {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="text-accent hover:underline">открыть</a>}
-          </div>
-          {p.title && <p className="font-medium">{p.title}</p>}
-          <p className="line-clamp-3 whitespace-pre-line">{p.text || "(без текста)"}</p>
-        </li>
-      ))}
-    </ul>
-  );
+  return <PostList posts={posts} />;
 }
 
 export default function SourcesPage() {
@@ -74,7 +74,7 @@ export default function SourcesPage() {
   }, []);
   useEffect(load, [load]);
 
-  const syncing = sources?.some((s) => s.last_job && ACTIVE.has(s.last_job.status)) ?? false;
+  const syncing = sources?.some((s) => [s.last_job, s.last_analysis].some((j) => j && ACTIVE.has(j.status))) ?? false;
   useEffect(() => {
     if (!syncing) return;
     const t = setInterval(load, 3000);
@@ -111,14 +111,14 @@ export default function SourcesPage() {
     <>
       <PageHeader
         title="Источники"
-        subtitle="Каналы и сайты, которые собираем: ваши, конкурентов и рынка. Telegram и RSS обновляются ежедневно, сайты и Instagram — еженедельно."
+        subtitle="Каналы и сайты, которые собираем: ваши, конкурентов и рынка. Telegram, VK, YouTube и RSS обновляются ежедневно, сайты и Instagram — еженедельно."
       />
 
       {canManage && (
         <form onSubmit={add} className="card mb-4 flex flex-wrap items-end gap-3">
           <div className="min-w-72 flex-1">
             <label className="label" htmlFor="url">Адрес</label>
-            <input id="url" name="url" required className="input" placeholder="t.me/канал, instagram.com/профиль, сайт.by или ссылка на RSS" />
+            <input id="url" name="url" required className="input" placeholder="t.me/канал, instagram.com/…, youtube.com/@…, vk.com/…, сайт или RSS" />
           </div>
           <div>
             <label className="label" htmlFor="kind">Тип</label>
@@ -150,6 +150,8 @@ export default function SourcesPage() {
             const Icon = KIND_ICON[s.kind];
             const active = !!s.last_job && ACTIVE.has(s.last_job.status);
             const note = jobNote(s);
+            const aNote = analysisNote(s);
+            const analyzing = !!s.last_analysis && ACTIVE.has(s.last_analysis.status);
             return (
               <div key={s.id} className="card">
                 <div className="flex flex-wrap items-start gap-4">
@@ -162,8 +164,9 @@ export default function SourcesPage() {
                     <a href={s.url} target="_blank" rel="noreferrer" className="text-xs text-muted hover:text-accent">{s.url}</a>
                     <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
                       <span className={STATUS[s.status].cls}>{STATUS[s.status].label}</span>
-                      {(s.kind === "telegram" || s.kind === "instagram") && <span>Подписчики: {fmtNum(s.followers)}</span>}
+                      {s.followers !== null && <span>Подписчики: {fmtNum(s.followers)}</span>}
                       <span>Постов: {fmtNum(s.posts_count)}</span>
+                      {s.median_views !== null && <span>Медиана просмотров: {fmtNum(Math.round(s.median_views))}</span>}
                       <span className="text-muted">Обновлён: {fmtDate(s.last_synced_at)}</span>
                     </div>
                     {s.last_error && s.status !== "ok" && <p className="mt-1 text-sm text-bad">{s.last_error}</p>}
@@ -173,12 +176,24 @@ export default function SourcesPage() {
                         {note.text}
                       </p>
                     )}
+                    {aNote && s.status === "ok" && (
+                      <p className={`mt-1 flex items-center gap-1 text-sm ${aNote.cls}`}>
+                        {analyzing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                        {aNote.text}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     {canManage && (
                       <button className="btn-ghost" disabled={active} title="Собрать сейчас"
                               onClick={() => act(() => api(`/sources/${s.id}/sync`, { method: "POST" }))}>
                         <RefreshCw className={`size-4 ${active ? "animate-spin" : ""}`} />
+                      </button>
+                    )}
+                    {canManage && s.posts_count > 0 && (
+                      <button className="btn-ghost" disabled={analyzing} title="Проанализировать: метрики, разметка, эмбеддинги"
+                              onClick={() => act(() => api(`/sources/${s.id}/analyze`, { method: "POST" }))}>
+                        <Sparkles className="size-4" />
                       </button>
                     )}
                     {canManage && (
