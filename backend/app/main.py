@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 from sqlalchemy import text
 
+from app.admin.router import router as admin_router
 from app.analysis.router import market_router
 from app.analysis.router import router as taxonomy_router
 from app.audits.router import public_router as public_audits_router
@@ -57,7 +58,7 @@ api = APIRouter(prefix="/api/v1")
 for r in (auth_router, org_router, billing_router, jobs_router, sources_router, taxonomy_router,
           market_router, competitors_router, posts_router,
           topics_router, websites_router, audits_router, public_audits_router,
-          strategy_router, brand_router, factory_router, digests_router):
+          strategy_router, brand_router, factory_router, digests_router, admin_router):
     api.include_router(r)
 app.include_router(api)
 

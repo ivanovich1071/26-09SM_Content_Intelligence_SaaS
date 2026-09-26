@@ -70,10 +70,12 @@ backend/app/
   digests/       stats.py (цифры периода — код), render.py (шаблон, .md, HTML-письмо), mailer.py (SMTP),
                  generator.py (задача generate_digest, расписание, schedule_due), router.py (/digests, /schedule,
                  /export, /send)
+  admin/         deps.py (get_superadmin → 404 не-суперадминам, log_action), stats.py (сводка, организации, расходы,
+                 задачи, ошибки, провайдеры — запросы), router.py (/admin/*), cli.py (grant|revoke|list суперадмина)
   sources/       service.py (resolve/global_source/start_sync — общий для /sources и конкурентов), sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
                  analyze_source → profile_competitor)
-backend/migrations/versions/0001_saas_core.py … 0011_digests.py
+backend/migrations/versions/0001_saas_core.py … 0012_admin.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы> · app/free-audit (публичный аудит)
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
@@ -99,6 +101,8 @@ frontend/src/
   скрывается и не размечается только для организации, которой виден оригинал — фильтр `dedupe.not_hidden(org_id)`
   обязателен во всех выборках постов. Промпты — `ai/prompts/<агент>/*.md`, загрузка `prompts.load("classifier/system")`.
 - **Долгие операции:** `jobs.service.create_job` + `enqueue`, обработчик — через `workers.tasks.run_job`.
+- **Админка:** эндпоинты `/admin/*` — `Depends(get_superadmin)`, каждое изменение — `log_action(...)` в той же
+  транзакции. Ключи провайдеров в ответах не отдаём — только «задан/не задан».
 - **Числа считает код**, модель интерпретирует; при нехватке данных — явно «Недостаточно данных».
 - Промпты — в `backend/app/ai/prompts/<агент>/`.
 - Комментарии — только если неочевидно «почему». Коммиты — Conventional Commits.
@@ -151,4 +155,7 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
   статусы, экспорт .md/.html, очередь тем из «Стратегии», 215 тестов
 - ✅ EPIC 11 — Дайджест: цифры периода кодом (рынок, темы, конкуренты и их сайты, «выстрелившие» посты, свой
   контент), выводы и идеи моделью, расписание, email (SMTP), .md/.html/PDF, 223 теста
+- ✅ EPIC 13 — Админка: организации и ручная смена тарифа (срок, статус, индивидуальные лимиты, заметка), пользователи
+  (блокировка, суперадмины через `SUPERADMIN_EMAILS` или CLI), расход LLM по организациям/моделям/операциям, задачи
+  всех организаций (отмена, повтор), лента ошибок, провайдеры и инфраструктура, журнал действий, 235 тестов
 - 🔲 Далее: EPIC 12 — Биллинг (см. `ROADMAP.md`)

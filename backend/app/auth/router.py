@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import service
 from app.auth.schemas import LoginIn, MeOut, OrgBrief, RefreshIn, RegisterIn, TokenOut
-from app.core.db import get_session
+from app.core.config import settings
+from app.core.db import get_session, utcnow
 from app.core.deps import get_current_user
 from app.core.security import create_token, decode_token, hash_password, verify_password
 from app.models import User
@@ -14,6 +15,14 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 def _tokens(user_id: int) -> TokenOut:
     return TokenOut(access_token=create_token(user_id, "access"), refresh_token=create_token(user_id, "refresh"))
+
+
+async def _seen(session: AsyncSession, user: User) -> None:
+    """Отметка активности и выдача прав суперадмина по SUPERADMIN_EMAILS (снять права — в админке или CLI)."""
+    user.last_seen_at = utcnow()
+    if user.email.lower() in settings.superadmins:
+        user.is_superadmin = True
+    await session.commit()
 
 
 def _norm_email(email: str) -> str:
@@ -30,7 +39,7 @@ async def register(body: RegisterIn, session: AsyncSession = Depends(get_session
     await session.flush()
     await service.create_organization(session, body.organization_name, user)
     await service.accept_pending_invitations(session, user)
-    await session.commit()
+    await _seen(session, user)
     return _tokens(user.id)
 
 
@@ -40,6 +49,7 @@ async def login(body: LoginIn, session: AsyncSession = Depends(get_session)):
             ).scalar_one_or_none()
     if not user or not user.is_active or not verify_password(body.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Неверный email или пароль")
+    await _seen(session, user)
     return _tokens(user.id)
 
 
@@ -49,11 +59,12 @@ async def refresh(body: RefreshIn, session: AsyncSession = Depends(get_session))
     user = await session.get(User, user_id) if user_id else None
     if not user or not user.is_active:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Сессия истекла, войдите снова")
+    await _seen(session, user)
     return _tokens(user.id)
 
 
 @router.get("/me", response_model=MeOut)
 async def me(user: User = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     orgs = await service.my_organizations(session, user.id)
-    return MeOut(id=user.id, email=user.email, full_name=user.full_name,
+    return MeOut(id=user.id, email=user.email, full_name=user.full_name, is_superadmin=user.is_superadmin,
                  organizations=[OrgBrief(id=o.id, name=o.name, slug=o.slug, role=r) for o, r in orgs])

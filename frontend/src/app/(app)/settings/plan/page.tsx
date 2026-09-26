@@ -8,10 +8,11 @@ import { METRIC_LABELS } from "@/lib/nav";
 export default function PlanPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
+  const [until, setUntil] = useState<string | null>(null);
 
   useEffect(() => {
     api<Plan[]>("/billing/plans").then(setPlans);
-    api<Usage>("/billing/usage").then((u) => setCurrent(u.plan));
+    api<Usage>("/billing/usage").then((u) => { setCurrent(u.plan); setUntil(u.plan_until); });
   }, []);
 
   return (
@@ -27,7 +28,11 @@ export default function PlanPage() {
             <p className="text-sm text-muted">
               {p.price_month_usd === null ? "цена уточняется" : p.price_month_usd === 0 ? "бесплатно" : `$${p.price_month_usd}/мес`}
             </p>
-            {p.code === current && <p className="mt-1 text-xs font-semibold text-accent">Ваш тариф</p>}
+            {p.code === current && (
+              <p className="mt-1 text-xs font-semibold text-accent">
+                Ваш тариф{until && ` до ${new Date(until).toLocaleDateString("ru-RU")}`}
+              </p>
+            )}
             <ul className="mt-3 space-y-1 text-sm">
               {Object.entries(p.limits).map(([k, v]) => (
                 <li key={k} className="flex justify-between gap-2">

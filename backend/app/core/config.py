@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     app_name: str = "SM Content Intelligence"
     environment: str = "dev"
     secret_key: str = "change-me"
+    # Суперадмины (админка /admin): email через запятую; флаг ставится при входе. Также: python -m app.admin.cli
+    superadmin_emails: str = ""
     access_token_minutes: int = 30
     refresh_token_days: int = 30
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -69,6 +71,11 @@ class Settings(BaseSettings):
     smtp_tls: bool = True                 # STARTTLS; для порта 465 — SMTP_SSL=true
     smtp_ssl: bool = False
     app_url: str = "http://localhost:3000"  # ссылка «открыть в сервисе» в письме
+
+
+    @property
+    def superadmins(self) -> set[str]:
+        return {e.strip().lower() for e in self.superadmin_emails.split(",") if e.strip()}
 
 
 @lru_cache

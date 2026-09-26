@@ -51,7 +51,7 @@ export const SETTINGS_NAV: NavItem[] = [
   { href: "/settings/team", title: "Команда", icon: Users },
   { href: "/settings/plan", title: "Тариф", icon: CreditCard },
   { href: "/settings/usage", title: "Использование", icon: BarChart3 },
-  { href: "/settings/api", title: "API", icon: KeyRound, epic: 13, description: "API-ключи для Enterprise." },
+  { href: "/settings/api", title: "API", icon: KeyRound, description: "API-ключи для Enterprise — после биллинга." },
 ];
 
 export const METRIC_LABELS: Record<string, string> = {

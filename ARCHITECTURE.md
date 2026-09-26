@@ -132,12 +132,13 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | Brand | `brand_profiles` (профиль компании и голос бренда в одной записи) |
 | Factory | `content_projects`, `content_versions` (поля, контекст RAG, QA); генерации — `usage_events` + `llm_requests` |
 | Digest | `digests`, `digest_schedules` |
-| System | `jobs`, `llm_requests`, `audit_log` |
+| System | `jobs`, `llm_requests`, `admin_actions` (журнал действий суперадминов) |
 
 Реализовано в миграции 0001: organizations, users, memberships, plans, subscriptions, usage_events, jobs, llm_requests.
 Миграция 0002: global_sources, sources, global_posts, post_metrics.
 Миграция 0007: websites, website_pages, page_snapshots, website_changes.
 Миграция 0006: topic_clusters, topic_cluster_posts, topic_insights.
+Миграция 0012: admin_actions; subscriptions.limits_override, subscriptions.note; users.last_seen_at.
 Миграция 0005: post_insights (AI-разбор поста, кэш на организацию).
 Миграция 0004: competitors, sources.competitor_id, source_kind += youtube, vk.
 Миграция 0003: taxonomies, post_analysis, post_embeddings (vector(1536), HNSW cosine); метрики в global_posts
