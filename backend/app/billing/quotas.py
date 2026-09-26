@@ -29,11 +29,21 @@ def month_start() -> datetime:
     return datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
+def is_active(sub: Subscription | None) -> bool:
+    """Действует ли подписка: статус active и срок (если задан) не истёк. Иначе организация на Free."""
+    return bool(sub and sub.status == "active"
+                and (sub.current_period_end is None or sub.current_period_end > datetime.now(UTC)))
+
+
+def effective_limits(sub: Subscription) -> dict:
+    return {**sub.plan.limits, **(sub.limits_override or {})}
+
+
 async def plan_limits(session: AsyncSession, org_id: int) -> tuple[str, dict]:
     stmt = select(Subscription).where(Subscription.organization_id == org_id)
     sub = (await session.execute(stmt)).scalar_one_or_none()
-    if sub and sub.status == "active":
-        return sub.plan_code, sub.plan.limits
+    if is_active(sub):
+        return sub.plan_code, effective_limits(sub)
     return DEFAULT_PLAN, PLANS[DEFAULT_PLAN]["limits"]
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -55,6 +55,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {MAIN_NAV.map((i) => <NavLink key={i.href} item={i} active={pathname.startsWith(i.href)} />)}
           <p className="px-3 pt-5 pb-1 text-xs font-semibold tracking-wide text-muted uppercase">Настройки</p>
           {SETTINGS_NAV.map((i) => <NavLink key={i.href} item={i} active={pathname.startsWith(i.href)} />)}
+          {me.is_superadmin && (
+            <>
+              <p className="px-3 pt-5 pb-1 text-xs font-semibold tracking-wide text-muted uppercase">Сервис</p>
+              <NavLink item={{ href: "/admin", title: "Админка", icon: ShieldCheck }} active={pathname.startsWith("/admin")} />
+            </>
+          )}
         </nav>
         <div className="mt-auto border-t border-line pt-3">
           <p className="truncate px-3 text-xs text-muted">{me.email}</p>

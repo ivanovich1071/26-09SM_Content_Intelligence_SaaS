@@ -95,10 +95,11 @@ export async function download(path: string, filename: string): Promise<void> {
 
 export type Role = "owner" | "admin" | "member" | "viewer";
 export type OrgBrief = { id: number; name: string; slug: string; role: Role };
-export type Me = { id: number; email: string; full_name: string | null; organizations: OrgBrief[] };
+export type Me = { id: number; email: string; full_name: string | null; is_superadmin: boolean; organizations: OrgBrief[] };
 export type Tokens = { access_token: string; refresh_token: string };
 export type Usage = {
   plan: string;
+  plan_until: string | null;
   period_start: string;
   limits: Record<string, number | null>;
   used: Record<string, number>;

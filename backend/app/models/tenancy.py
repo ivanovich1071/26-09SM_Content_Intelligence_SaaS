@@ -36,6 +36,7 @@ class User(TimestampMixin, Base):
     full_name: Mapped[str | None] = mapped_column(String(200))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_superadmin: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # вход или обновление сессии
 
     memberships: Mapped[list["Membership"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 

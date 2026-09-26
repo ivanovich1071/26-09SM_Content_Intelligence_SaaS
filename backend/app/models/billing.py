@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base, TimestampMixin, utcnow
@@ -24,7 +24,9 @@ class Subscription(TimestampMixin, Base):
     plan_code: Mapped[str] = mapped_column(ForeignKey("plans.code"))
     status: Mapped[str] = mapped_column(String(20), default="active")  # active | past_due | cancelled
     current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # после неё — Free
+    limits_override: Mapped[dict | None] = mapped_column(JSON)  # индивидуальные лимиты поверх тарифа (админка)
+    note: Mapped[str | None] = mapped_column(Text)  # заметка администратора: договорённости, счёт, контакт
 
     plan: Mapped[Plan] = relationship(lazy="joined")
 

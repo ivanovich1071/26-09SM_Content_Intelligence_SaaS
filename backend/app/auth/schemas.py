@@ -36,4 +36,5 @@ class MeOut(BaseModel):
     id: int
     email: str
     full_name: str | None
+    is_superadmin: bool = False
     organizations: list[OrgBrief]
