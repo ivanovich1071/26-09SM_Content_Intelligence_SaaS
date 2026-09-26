@@ -42,3 +42,11 @@ export async function claimPendingAudit(): Promise<number | null> {
     return null; // уже перенесён или истёк — не мешаем входу
   }
 }
+
+export const CRITERIA_NAMES: Record<string, string> = {
+  strategy: "контент-стратегия", audience_fit: "попадание в аудиторию", hook: "цепляющее начало",
+  value: "польза и доказательства", differentiation: "отличие от конкурентов", cta: "призыв к действию",
+};
+export const FORMAT_NAMES: Record<string, string> = {
+  telegram: "Telegram", email: "Email", linkedin: "LinkedIn", vk: "VK", article: "Статья",
+};

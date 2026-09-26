@@ -42,7 +42,7 @@
 | 06 | Topic Analyst | `topics/clustering.py` | classify | Кластеры → названия/под-темы |
 | 07 | Trend Analyst | `topics/trends.py` | — (код) + analyze | Динамика → растущие темы |
 | 08 | Content Auditor | `audits/pipeline.py` | analyze | Данные → 6 критериев |
-| 09 | Content Strategist | `audits/opportunities.py` | analyze | Аудит+рынок+gaps → opportunities |
+| 09 | Content Strategist | `strategy/opportunities.py` | analyze | Кандидаты кода (gap, тренд, ER) + аудит → 10 opportunities |
 | 10 | Content Writer | `content/writer.py` | write | Контекст → черновик |
 | 11 | Content Editor | `content/editor.py` | write | Черновик + правки → версия |
 | 12 | Content QA | `content/qa.py` | qa | Текст + контекст → проверки |
@@ -108,7 +108,8 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | `generate_embeddings` | тексты без эмбеддинга → EmbeddingProvider → pgvector |
 | `cluster_topics` | эмбеддинги за 90 дней → кластеризация → Topic Analyst → `topics` |
 | `calculate_metrics` | ER, медианы по источнику, overperformance |
-| `run_audit` | источники → сбор → классификация → метрики → benchmark → Auditor → Strategist |
+| `run_audit` | источники → сбор → классификация → метрики → benchmark → Auditor; после — `build_opportunities` |
+| `build_opportunities` | кандидаты тем (код) → Strategist → `content_opportunities` |
 | `generate_content` | RAG-контекст → Writer → версия |
 | `run_content_qa` | QA → отчёт проверок |
 | `generate_digest` | период → метрики → Digest Generator → рассылка |
@@ -127,7 +128,7 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | Sources | `global_sources`, `sources`, `competitors`, `social_accounts`, `websites`, `website_pages`, `page_snapshots`, `website_changes` |
 | Content | `global_posts`, `post_metrics`, `post_analysis`, `post_embeddings(vector)` |
 | Topics | `taxonomies`, `topics`, `topic_clusters`, `trends` |
-| Audit | `content_audits` (результат: метрики, benchmark, gaps, проблемы — JSON), `audit_items` (критерий: балл, пояснение, evidence, советы); `content_opportunities` — EPIC 9 |
+| Audit | `content_audits` (результат: метрики, benchmark, gaps, проблемы — JSON), `audit_items` (критерий: балл, пояснение, evidence, советы); `content_opportunities` (тема, почему, угол, форматы, цифры рынка, примеры, статус) |
 | Brand | `brand_profiles`, `brand_voice` |
 | Factory | `content_projects`, `content_versions`, `content_generations` |
 | Digest | `digests`, `digest_schedules` |

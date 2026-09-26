@@ -469,3 +469,29 @@ export type Audit = AuditBrief & {
   locked: boolean;
   token: string | null;
 };
+
+export type OpportunityStatus = "new" | "in_factory" | "done" | "dismissed" | "archived";
+export type Opportunity = {
+  id: number;
+  rank: number;
+  title: string;
+  topic: string | null;
+  why: string;
+  angle: string;
+  formats: string[];
+  funnel_stage: string | null;
+  target_role: string | null;
+  fixes: string[];
+  market: {
+    share_market: number; share_own: number; gap: number; trend_pp: number | null; median_er: number | null;
+    market_median_er: number | null; saturation_per_week: number; market_total: number; own: number; competitors: string[];
+  };
+  examples: { post_id: number; url: string | null; date: string | null; source: string; competitor: boolean; text: string;
+              er: number | null; overperformance: number | null; format: string }[];
+  score: number;
+  ai: boolean;
+  status: OpportunityStatus;
+  audit_id: number | null;
+  created_at: string;
+};
+export type Opportunities = { items: Opportunity[]; job: (Job & { finished_at: string | null }) | null };
