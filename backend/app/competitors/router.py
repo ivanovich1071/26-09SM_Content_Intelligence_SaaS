@@ -6,6 +6,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.analysis import dedupe
 from app.billing import quotas
 from app.competitors import profile, stats
 from app.connectors import InvalidSource, social_kind
@@ -247,6 +248,6 @@ async def competitor_posts(competitor_id: int, limit: int = 30, sort: str = "rec
             .outerjoin(PostAnalysis, and_(PostAnalysis.post_id == GlobalPost.id,
                                           PostAnalysis.organization_id == tenant.org_id))
             .outerjoin(PostEmbedding, PostEmbedding.post_id == GlobalPost.id)
-            .where(Source.competitor_id == competitor.id, GlobalPost.duplicate_of_id.is_(None))
+            .where(Source.competitor_id == competitor.id, dedupe.not_hidden(tenant.org_id))
             .order_by(order, GlobalPost.id.desc()).limit(min(limit, 100)))
     return [post_out(p, a, bool(e)) for p, a, e in (await session.execute(stmt)).all()]

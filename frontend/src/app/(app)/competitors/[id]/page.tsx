@@ -165,7 +165,7 @@ function Content({ id }: { id: number }) {
           </button>
         ))}
       </div>
-      {posts === null ? <p className="text-sm text-muted">Загрузка…</p> : <PostList posts={posts} />}
+      {posts === null ? <p className="text-sm text-muted">Загрузка…</p> : <PostList posts={posts} linked />}
     </div>
   );
 }
