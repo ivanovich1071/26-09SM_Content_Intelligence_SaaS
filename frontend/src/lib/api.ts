@@ -75,6 +75,24 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
   return data as T;
 }
 
+/** Скачивание файла с API (экспорт): те же токен и организация, что у api(). */
+export async function download(path: string, filename: string): Promise<void> {
+  const headers = new Headers();
+  const token = read(ACCESS);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const org = read(ORG);
+  if (org) headers.set("X-Organization-Id", org);
+  const r = await fetch(`/api/v1${path}`, { headers });
+  if (r.status === 401 && (await refreshTokens())) return download(path, filename);
+  if (!r.ok) throw new ApiError(r.status, (await r.json().catch(() => null))?.detail);
+  const url = URL.createObjectURL(await r.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export type Role = "owner" | "admin" | "member" | "viewer";
 export type OrgBrief = { id: number; name: string; slug: string; role: Role };
 export type Me = { id: number; email: string; full_name: string | null; organizations: OrgBrief[] };
@@ -495,3 +513,33 @@ export type Opportunity = {
   created_at: string;
 };
 export type Opportunities = { items: Opportunity[]; job: (Job & { finished_at: string | null }) | null };
+
+export type Brand = {
+  company: string | null; website: string | null; description: string | null; offer: string | null;
+  audience: string | null; differentiators: string[]; proof_points: string[]; cta: string | null; tone: string | null;
+  do: string[]; dont: string[]; examples: string[]; source?: string | null; updated_at?: string | null;
+};
+export type FormatField = { key: string; label: string; min: number; max: number; multiline: boolean };
+export type ContentFormat = { key: string; label: string; rules: string; fields: FormatField[] };
+export type QACheck = { code: string; level: "ok" | "warn" | "error"; message: string; source: "code" | "ai";
+                        post_id?: number; url?: string | null };
+export type ContentVersion = {
+  id: number; number: number; kind: "write" | "edit" | "manual"; instruction: string | null;
+  fields: Record<string, string>; model: string | null; created_at: string;
+  qa: { status?: "ok" | "warn" | "error"; checks?: QACheck[]; ai?: boolean; at?: string };
+  context: {
+    search?: string | null; topic?: string | null;
+    opportunity?: { почему: string; угол: string } | null;
+    market_posts?: { post_id: number; url: string | null; source: string; competitor: boolean; text: string;
+                     overperformance: number | null; date: string | null }[];
+    own_posts?: { post_id: number; url: string | null; text: string }[];
+    patterns?: Record<string, unknown>;
+    audit?: { слабые_места: { критерий: string; балл: number }[] } | null;
+  };
+};
+export type ContentProjectBrief = {
+  id: number; title: string; format: string; status: "draft" | "approved" | "published" | "archived";
+  opportunity_id: number | null; versions: number; qa: "ok" | "warn" | "error" | null;
+  job: (Job & { finished_at: string | null }) | null; created_at: string; updated_at: string;
+};
+export type ContentProject = ContentProjectBrief & { brief: string | null; items: ContentVersion[] };

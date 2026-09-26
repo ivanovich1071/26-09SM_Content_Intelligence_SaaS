@@ -8,6 +8,7 @@ from app.analysis import pipeline
 from app.audits import pipeline as audit_pipeline
 from app.competitors import profile
 from app.core.db import SessionLocal
+from app.factory import pipeline as factory_pipeline
 from app.jobs.service import set_status
 from app.models import Job, JobStatus
 from app.sources import sync
@@ -101,3 +102,7 @@ async def run_audit(ctx: dict, job_id: int) -> None:
 
 async def build_opportunities(ctx: dict, job_id: int) -> None:
     await run_job(job_id, opportunities.handle_build_opportunities)
+
+
+async def generate_content(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, factory_pipeline.handle_generate_content)

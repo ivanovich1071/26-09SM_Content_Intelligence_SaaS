@@ -2,6 +2,7 @@ from app.models.analysis import PostAnalysis, PostEmbedding, Taxonomy
 from app.models.audits import AuditItem, ContentAudit
 from app.models.billing import Plan, Subscription, UsageEvent
 from app.models.competitors import Competitor
+from app.models.factory import BrandProfile, ContentProject, ContentVersion
 from app.models.insights import PostInsight
 from app.models.sources import GlobalPost, GlobalSource, PostMetric, Source, SourceKind, SourceRole, SourceStatus
 from app.models.strategy import ContentOpportunity
@@ -11,9 +12,10 @@ from app.models.topics import TopicCluster, TopicClusterPost, TopicInsight
 from app.models.websites import PageSnapshot, Website, WebsiteChange, WebsitePage
 
 __all__ = [
-    "FINAL_STATUSES", "ROLE_RANK", "AuditItem", "Competitor", "ContentAudit", "ContentOpportunity", "GlobalPost",
-    "GlobalSource", "Invitation", "Job", "JobStatus", "LLMRequest", "Membership", "Organization", "PageSnapshot",
-    "Plan", "PostAnalysis", "PostEmbedding", "PostInsight", "PostMetric", "Role", "Source", "SourceKind",
-    "SourceRole", "SourceStatus", "Subscription", "Taxonomy", "TopicCluster", "TopicClusterPost", "TopicInsight",
-    "UsageEvent", "User", "Website", "WebsiteChange", "WebsitePage",
+    "FINAL_STATUSES", "ROLE_RANK", "AuditItem", "BrandProfile", "Competitor", "ContentAudit", "ContentOpportunity",
+    "ContentProject", "ContentVersion", "GlobalPost", "GlobalSource", "Invitation", "Job", "JobStatus", "LLMRequest",
+    "Membership", "Organization", "PageSnapshot", "Plan", "PostAnalysis", "PostEmbedding", "PostInsight",
+    "PostMetric", "Role", "Source", "SourceKind", "SourceRole", "SourceStatus", "Subscription", "Taxonomy",
+    "TopicCluster", "TopicClusterPost", "TopicInsight", "UsageEvent", "User", "Website", "WebsiteChange",
+    "WebsitePage",
 ]

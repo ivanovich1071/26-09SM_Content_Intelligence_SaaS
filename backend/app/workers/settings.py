@@ -9,7 +9,7 @@ from app.workers import tasks
 class WorkerSettings:
     functions = [tasks.ping, tasks.sync_source, tasks.analyze_source, tasks.profile_competitor, tasks.cluster_topics,
                  tasks.crawl_website, tasks.run_audit,
-                 tasks.build_opportunities]
+                 tasks.build_opportunities, tasks.generate_content]
     cron_jobs = [
         cron(tasks.schedule_syncs, minute={7}),  # ежечасно; сроки источников проверяет schedule_due
         cron(tasks.schedule_clustering, hour={4}, minute={17}),

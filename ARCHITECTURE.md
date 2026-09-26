@@ -43,9 +43,9 @@
 | 07 | Trend Analyst | `topics/trends.py` | — (код) + analyze | Динамика → растущие темы |
 | 08 | Content Auditor | `audits/pipeline.py` | analyze | Данные → 6 критериев |
 | 09 | Content Strategist | `strategy/opportunities.py` | analyze | Кандидаты кода (gap, тренд, ER) + аудит → 10 opportunities |
-| 10 | Content Writer | `content/writer.py` | write | Контекст → черновик |
-| 11 | Content Editor | `content/editor.py` | write | Черновик + правки → версия |
-| 12 | Content QA | `content/qa.py` | qa | Текст + контекст → проверки |
+| 10 | Content Writer | `factory/pipeline.py` + `prompts/writer` | write | RAG-контекст + бренд → черновик |
+| 11 | Content Editor | `factory/pipeline.py` + `prompts/editor` | write | Версия + инструкция + замечания QA → версия |
+| 12 | Content QA | `factory/qa.py` (код) + `prompts/qa` | qa | Текст + контекст → проверки |
 | 13 | Digest Generator | `digests/generator.py` | analyze | Период → дайджест |
 
 ## 3. AI Router
@@ -110,7 +110,7 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | `calculate_metrics` | ER, медианы по источнику, overperformance |
 | `run_audit` | источники → сбор → классификация → метрики → benchmark → Auditor; после — `build_opportunities` |
 | `build_opportunities` | кандидаты тем (код) → Strategist → `content_opportunities` |
-| `generate_content` | RAG-контекст → Writer → версия |
+| `generate_content` | write: RAG-контекст → Writer → QA → версия; edit: Editor → QA → версия; qa: перепроверка |
 | `run_content_qa` | QA → отчёт проверок |
 | `generate_digest` | период → метрики → Digest Generator → рассылка |
 
@@ -129,8 +129,8 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | Content | `global_posts`, `post_metrics`, `post_analysis`, `post_embeddings(vector)` |
 | Topics | `taxonomies`, `topics`, `topic_clusters`, `trends` |
 | Audit | `content_audits` (результат: метрики, benchmark, gaps, проблемы — JSON), `audit_items` (критерий: балл, пояснение, evidence, советы); `content_opportunities` (тема, почему, угол, форматы, цифры рынка, примеры, статус) |
-| Brand | `brand_profiles`, `brand_voice` |
-| Factory | `content_projects`, `content_versions`, `content_generations` |
+| Brand | `brand_profiles` (профиль компании и голос бренда в одной записи) |
+| Factory | `content_projects`, `content_versions` (поля, контекст RAG, QA); генерации — `usage_events` + `llm_requests` |
 | Digest | `digests`, `digest_schedules` |
 | System | `jobs`, `llm_requests`, `audit_log` |
 
