@@ -23,6 +23,7 @@ from app.jobs.router import router as jobs_router
 from app.organizations.router import router as org_router
 from app.posts.router import router as posts_router
 from app.sources.router import router as sources_router
+from app.strategy.router import router as strategy_router
 from app.topics.router import router as topics_router
 from app.websites.router import router as websites_router
 
@@ -52,7 +53,8 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_cr
 api = APIRouter(prefix="/api/v1")
 for r in (auth_router, org_router, billing_router, jobs_router, sources_router, taxonomy_router,
           market_router, competitors_router, posts_router,
-          topics_router, websites_router, audits_router, public_audits_router):
+          topics_router, websites_router, audits_router, public_audits_router,
+          strategy_router):
     api.include_router(r)
 app.include_router(api)
 

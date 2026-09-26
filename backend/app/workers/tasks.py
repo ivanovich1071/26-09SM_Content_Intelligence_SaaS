@@ -11,6 +11,7 @@ from app.core.db import SessionLocal
 from app.jobs.service import set_status
 from app.models import Job, JobStatus
 from app.sources import sync
+from app.strategy import opportunities
 from app.topics import cluster
 from app.websites import crawl
 
@@ -95,3 +96,8 @@ async def schedule_crawls(ctx: dict) -> None:
 
 async def run_audit(ctx: dict, job_id: int) -> None:
     await run_job(job_id, audit_pipeline.handle_run_audit)
+    await opportunities.after_audit(job_id, ctx.get("redis"))
+
+
+async def build_opportunities(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, opportunities.handle_build_opportunities)

@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     turnstile_secret: str = ""            # Cloudflare Turnstile; пусто — капча не требуется
     trust_proxy_headers: bool = False     # брать IP клиента из X-Forwarded-For (только за своим прокси)
 
+    # Content Strategy
+    strategy_days: int = 90
+    strategy_min_market_posts: int = 20   # меньше размеченных постов рынка — темы не предлагаем
+
 
 @lru_cache
 def get_settings() -> Settings:

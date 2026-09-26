@@ -8,6 +8,7 @@ import {
   Globe,
   KeyRound,
   Layers,
+  Lightbulb,
   Mic2,
   Newspaper,
   Plug,
@@ -34,6 +35,8 @@ export const MAIN_NAV: NavItem[] = [
     description: "Еженедельный обзор рынка: новые темы, изменения конкурентов, лучшие публикации, рекомендации." },
   { href: "/audit", title: "Аудит контента", icon: FileSearch, epic: 8,
     description: "Оценка вашего контента по 6 критериям со сравнением с рынком, проблемы, gaps и 10 тем." },
+  { href: "/strategy", title: "Стратегия", icon: Lightbulb, epic: 9,
+    description: "10 тем, о которых стоит писать: почему, цифры рынка, ваш пробел, примеры конкурентов, форматы." },
   { href: "/factory", title: "Контент Завод", icon: Factory, epic: 10,
     description: "Тема → формат → brand voice → черновик → редактор → QA. Telegram, Email, LinkedIn, VK, статья." },
 ];

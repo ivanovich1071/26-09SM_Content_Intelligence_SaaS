@@ -62,10 +62,12 @@ backend/app/
   audits/        criteria.py (критерии, веса, балл, эвристики), collect.py (каналы, сайт, сбор), benchmark.py
                  (метрики, рынок, gaps — код), pipeline.py (задача run_audit, Content Auditor), public.py (лимиты,
                  капча, частичный отчёт), router.py (/audits, /audits/claim, /public/audits)
+  strategy/      candidates.py (темы-кандидаты, score, примеры — код), opportunities.py (задача build_opportunities,
+                 Content Strategist, after_audit), router.py (/strategy/opportunities, /generate, PATCH статуса)
   sources/       service.py (resolve/global_source/start_sync — общий для /sources и конкурентов), sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
                  analyze_source → profile_competitor)
-backend/migrations/versions/0001_saas_core.py … 0008_audits.py
+backend/migrations/versions/0001_saas_core.py … 0009_strategy.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы> · app/free-audit (публичный аудит)
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
@@ -137,4 +139,6 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
 - ✅ EPIC 8 — Аудит контента: 6 критериев (балл — код, объяснения и evidence со ссылками на посты — модель),
   benchmark с порогом данных, gaps, прогресс по этапам, PDF через печать, публичный аудит без регистрации с
   лимитами и переносом в аккаунт, 197 тестов
-- 🔲 Далее: EPIC 9 — Content Strategy (см. `ROADMAP.md`)
+- ✅ EPIC 9 — Content Strategy: 10 тем с цифрами рынка, пробелом клиента и примерами конкурентов (код) и
+  формулировкой, углом и форматами (модель) с учётом аудита; вкладка «Стратегия», очередь в Контент Завод, 206 тестов
+- 🔲 Далее: EPIC 10 — Контент Завод (см. `ROADMAP.md`)
