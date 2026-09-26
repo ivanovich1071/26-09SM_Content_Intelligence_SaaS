@@ -64,10 +64,13 @@ backend/app/
                  капча, частичный отчёт), router.py (/audits, /audits/claim, /public/audits)
   strategy/      candidates.py (темы-кандидаты, score, примеры — код), opportunities.py (задача build_opportunities,
                  Content Strategist, after_audit), router.py (/strategy/opportunities, /generate, PATCH статуса)
+  factory/       formats.py (форматы и длины), brand.py (профиль и голос, подсказка), context.py (RAG), qa.py (проверки
+                 кодом), pipeline.py (задача generate_content: write/edit/qa), export.py (.md/.html), router.py
+                 (/brand, /factory/formats|projects|generate|versions|export)
   sources/       service.py (resolve/global_source/start_sync — общий для /sources и конкурентов), sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
                  analyze_source → profile_competitor)
-backend/migrations/versions/0001_saas_core.py … 0009_strategy.py
+backend/migrations/versions/0001_saas_core.py … 0010_factory.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы> · app/free-audit (публичный аудит)
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
@@ -141,4 +144,6 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
   лимитами и переносом в аккаунт, 197 тестов
 - ✅ EPIC 9 — Content Strategy: 10 тем с цифрами рынка, пробелом клиента и примерами конкурентов (код) и
   формулировкой, углом и форматами (модель) с учётом аудита; вкладка «Стратегия», очередь в Контент Завод, 206 тестов
-- 🔲 Далее: EPIC 10 — Контент Завод (см. `ROADMAP.md`)
+- ✅ EPIC 10 — Контент Завод: Brand Voice, RAG по рынку (pgvector), Writer → Editor → QA (код + модель), версии,
+  статусы, экспорт .md/.html, очередь тем из «Стратегии», 215 тестов
+- 🔲 Далее: EPIC 11 — Дайджест (см. `ROADMAP.md`)
