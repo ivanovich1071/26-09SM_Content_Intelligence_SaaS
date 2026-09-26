@@ -60,6 +60,16 @@ class Settings(BaseSettings):
     strategy_days: int = 90
     strategy_min_market_posts: int = 20   # меньше размеченных постов рынка — темы не предлагаем
 
+    # Дайджест: email через SMTP (без SMTP_HOST — только web и файлы)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_tls: bool = True                 # STARTTLS; для порта 465 — SMTP_SSL=true
+    smtp_ssl: bool = False
+    app_url: str = "http://localhost:3000"  # ссылка «открыть в сервисе» в письме
+
 
 @lru_cache
 def get_settings() -> Settings:

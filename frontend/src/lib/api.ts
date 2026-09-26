@@ -543,3 +543,38 @@ export type ContentProjectBrief = {
   job: (Job & { finished_at: string | null }) | null; created_at: string; updated_at: string;
 };
 export type ContentProject = ContentProjectBrief & { brief: string | null; items: ContentVersion[] };
+
+export type DigestPost = { post_id: number; url: string | null; date: string | null; source: string; role: string;
+                           format: string; topic: string | null; text: string; er: number | null; overperformance: number | null };
+export type DigestSiteChange = { site: string; page: string; url: string; kind: string; summary: string | null;
+                                 category: string | null; importance: string | null };
+export type DigestStats = {
+  period: { from: string; to: string; days: number };
+  enough: boolean;
+  market: { posts: number; prev_posts: number; delta_pct: number | null; sources: number; median_er: number | null;
+            prev_median_er: number | null; formats: { value: string; share: number }[] };
+  topics: { rising: { topic: string; share_market: number; trend_pp: number; market_total: number }[];
+            new: { topic: string; market_total: number; competitors: string[] }[];
+            gaps: { topic: string; share_market: number; share_own: number; gap: number }[] };
+  competitors: { id: number; name: string; posts: number; prev_posts: number; median_er: number | null;
+                 new_formats: string[]; best_post: DigestPost | null; site_changes: DigestSiteChange[] }[];
+  other_site_changes: DigestSiteChange[];
+  top_posts: DigestPost[];
+  outliers: DigestPost[];
+  own: { posts: number; prev_posts: number; delta_pct: number | null; median_er: number | null;
+         prev_median_er: number | null; best_post: DigestPost | null; audit: { id: number; score: number | null } | null };
+  opportunities: { id: number; title: string; why: string; formats: string[] }[];
+};
+export type DigestSections = {
+  headline: string; summary: string; market: string; topics: string; competitors: string; top_posts: string;
+  unusual: string; own: string; recommendations: { title: string; why: string }[];
+  ideas: { title: string; why: string; format: string }[];
+};
+export type DigestBrief = { id: number; title: string; headline: string; period_from: string; period_to: string; days: number;
+                            trigger: string; ai: boolean; emailed_at: string | null; email_error: string | null; created_at: string };
+export type Digest = DigestBrief & { stats: DigestStats; sections: DigestSections; model: string | null };
+export type DigestList = { items: DigestBrief[]; job: (Job & { finished_at: string | null }) | null };
+export type DigestSchedule = {
+  enabled: boolean; period: "weekly" | "monthly" | "custom"; weekday: number; day: number; every_days: number; hour: number;
+  send_email: boolean; recipients: string[]; last_run_at: string | null; next_run_at: string | null; email_configured: boolean;
+};
