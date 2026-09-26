@@ -9,7 +9,7 @@
 | `taxonomy/` | ✅ Предложение тем и ролей организации при онбординге | 3 |
 | `competitor/` | ✅ Competitor Analyst (статистика кодом + примеры постов → профиль) | 4 |
 | `post_analysis/` | ✅ AI-разбор поста (хук, боль, аргументация, почему отклик, что взять / не копировать) | 5 |
-| `topic/` | Topic Analyst, объяснение gap | 6 |
+| `topic/` | ✅ naming.md — названия под-тем; gap.md — объяснение Content Gap с идеями | 6 |
 | `website/` | Смысл изменения сайта | 7 |
 | `audit/` | Content Auditor (перенос из VM_SM `app/audit/content_audit.py`) | 8 |
 | `strategy/` | Content Strategist | 9 |

@@ -279,3 +279,67 @@ export type Discovery = {
   feed_url: string | null;
   social_links: { url: string; kind: SourceKind | null; supported: boolean; needs_key: boolean }[];
 };
+export type TopicRow = {
+  topic: string;
+  own: number;
+  competitor: number;
+  market: number;
+  market_total: number;
+  share_own: number;
+  share_market: number;
+  gap: number;
+  is_gap: boolean;
+  trend_pp: number | null;
+  prev_market: number;
+  saturation_per_week: number;
+  competitors: string[];
+  median_er: number | null;
+  median_engagement: number | null;
+  mean_engagement: number | null;
+  subtopics?: { id: number; label: string; size: number }[];
+};
+export type TopicsOverview = {
+  days: number;
+  own_total: number;
+  market_total: number;
+  prev_market_total: number;
+  topics: TopicRow[];
+  cluster_job: (Job & { finished_at: string | null }) | null;
+};
+export type GapInsight = {
+  data: {
+    why: string;
+    evidence: string[];
+    competitors: string[];
+    formats: string[];
+    how_to_cover: { angle?: string; format?: string; headline?: string }[];
+    risks: string;
+  };
+  days: number;
+  created_at: string;
+};
+export type GapsResponse = {
+  days: number;
+  own_total: number;
+  market_total: number;
+  threshold_pp: number;
+  gaps: (TopicRow & { insight: GapInsight | null })[];
+};
+export type Subtopic = {
+  id: number; label: string; description: string | null; keywords: string[]; size: number;
+  own: number; competitor: number; market: number;
+};
+export type TopicDetail = Omit<TopicRow, "subtopics"> & {
+  totals: { own: number; market: number };
+  weekly: { week: string; own: number; competitor: number; market: number }[];
+  formats_market: Share[];
+  formats_own: Share[];
+  content_types: Share[];
+  hooks: Share[];
+  by_competitor: { name: string; posts: number }[];
+  subtopics: Subtopic[];
+  related: { topic: string; similarity: number }[];
+  top_posts: Post[];
+  own_posts: Post[];
+  insight: GapInsight | null;
+};

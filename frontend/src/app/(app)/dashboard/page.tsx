@@ -4,7 +4,7 @@ import { Circle } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ComingSoon";
-import { api, type Job, type MarketOverview, type SourceRole } from "@/lib/api";
+import { api, type GapsResponse, type Job, type MarketOverview, type SourceRole } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 const ONBOARDING = [
@@ -154,12 +154,37 @@ function Market() {
   );
 }
 
+function TopGaps() {
+  const [data, setData] = useState<GapsResponse | null>(null);
+  useEffect(() => {
+    api<GapsResponse>("/topics/gaps?days=90").then(setData).catch(() => setData(null));
+  }, []);
+  if (!data || data.gaps.length === 0) return null;
+  return (
+    <div className="card mb-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">Главные Content Gaps за 90 дней</h2>
+        <Link href="/topics" className="text-sm text-accent hover:underline">Все темы</Link>
+      </div>
+      <ul className="mt-3 space-y-2 text-sm">
+        {data.gaps.slice(0, 3).map((g) => (
+          <li key={g.topic} className="flex flex-wrap items-center justify-between gap-2">
+            <Link href={`/topics/view?topic=${encodeURIComponent(g.topic)}`} className="font-medium hover:text-accent">{g.topic}</Link>
+            <span className="text-muted">рынок {g.share_market}% · вы {g.share_own}% · <span className="font-semibold text-warn">+{g.gap} п.п.</span></span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { org } = useAuth();
   return (
     <>
       <PageHeader title="Обзор" subtitle={`Организация «${org?.name}». Рынок по вашим источникам: объём, вовлечённость, темы и лучшие публикации.`} />
       <Market />
+      <TopGaps />
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="card">
           <h2 className="font-semibold">С чего начать</h2>
