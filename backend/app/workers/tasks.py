@@ -5,6 +5,7 @@ from collections.abc import Awaitable, Callable
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analysis import pipeline
+from app.audits import pipeline as audit_pipeline
 from app.competitors import profile
 from app.core.db import SessionLocal
 from app.jobs.service import set_status
@@ -90,3 +91,7 @@ async def schedule_crawls(ctx: dict) -> None:
         created = await crawl.schedule_due(session, ctx.get("redis"))
     if created:
         log.info("Запланировано обходов сайтов: %s", created)
+
+
+async def run_audit(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, audit_pipeline.handle_run_audit)

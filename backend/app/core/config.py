@@ -47,6 +47,15 @@ class Settings(BaseSettings):
     apify_timeout_sec: float = 300
     vk_service_token: str = ""            # сервисный ключ приложения VK; без него сообщества VK «недоступны»
 
+    # Аудит контента
+    audit_days: int = 90                  # период публикаций, по которому оценивается контент
+    audit_max_posts: int = 40             # столько последних постов размечается для аудита
+    audit_min_market_posts: int = 30      # меньше — «Недостаточно данных для надёжного рыночного сравнения»
+    public_audits_per_ip_day: int = 1     # бесплатный аудит без регистрации
+    public_audits_per_day: int = 100      # общий потолок публичных аудитов в сутки — защита бюджета LLM
+    turnstile_secret: str = ""            # Cloudflare Turnstile; пусто — капча не требуется
+    trust_proxy_headers: bool = False     # брать IP клиента из X-Forwarded-For (только за своим прокси)
+
 
 @lru_cache
 def get_settings() -> Settings:

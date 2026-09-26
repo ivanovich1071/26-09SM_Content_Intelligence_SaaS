@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthCard } from "@/components/AuthCard";
+import { claimPendingAudit } from "@/lib/audit";
 import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -19,7 +20,8 @@ export default function LoginPage() {
     setError(null);
     try {
       await login(String(f.get("email")), String(f.get("password")));
-      router.push("/dashboard");
+      const claimed = await claimPendingAudit(); // бесплатный аудит до регистрации → в организацию
+      router.push(claimed ? `/audit/${claimed}` : "/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось войти");
     } finally {

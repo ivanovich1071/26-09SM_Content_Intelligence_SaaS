@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { ApiError } from "@/lib/api";
+import { claimPendingAudit } from "@/lib/audit";
 import { useAuth } from "@/lib/auth";
 
 export default function RegisterPage() {
@@ -25,7 +26,8 @@ export default function RegisterPage() {
         full_name: String(f.get("full_name") || "") || undefined,
         organization_name: String(f.get("organization_name")),
       });
-      router.push("/dashboard");
+      const claimed = await claimPendingAudit(); // бесплатный аудит до регистрации → в организацию
+      router.push(claimed ? `/audit/${claimed}` : "/dashboard");
     } catch (err) {
       setError(err instanceof ApiError && err.status === 422 ? "Проверьте email и пароль (от 8 символов)" :
         err instanceof Error ? err.message : "Не удалось зарегистрироваться");

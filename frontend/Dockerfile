@@ -6,6 +6,9 @@ COPY . .
 # API_URL нужен на этапе сборки: rewrites вшиваются в сборку
 ARG API_URL=http://api:8000
 ENV API_URL=$API_URL
+# site key капчи публичного аудита (пусто — без капчи)
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 RUN npm run build
 
 FROM node:22-alpine

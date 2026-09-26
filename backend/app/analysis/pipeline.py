@@ -28,7 +28,7 @@ class AnalysisError(Exception):
     user_facing = True
 
 
-async def _upsert(session: AsyncSession, org_id: int, post_id: int, version: int, values: dict) -> None:
+async def upsert_label(session: AsyncSession, org_id: int, post_id: int, version: int, values: dict) -> None:
     row = {"organization_id": org_id, "post_id": post_id, "taxonomy_version": version,
            "model": classify.classifier_model(), "analyzed_at": utcnow(), "error": None,
            **{c: None for c in (*taxonomy.UNIVERSAL, "topic", "target_role", *classify.BOOL_FIELDS, "summary")},
@@ -62,7 +62,7 @@ async def classify_source(session: AsyncSession, job: Job, gs: GlobalSource, rou
     no_text = [(p, s) for p, s in rows if classify.needs_text(p)]
     todo = [(p, s) for p, s in rows if not classify.needs_text(p)]
     for p, _ in no_text:
-        await _upsert(session, org_id, p.id, tax.version, {"error": classify.NO_TEXT})
+        await upsert_label(session, org_id, p.id, tax.version, {"error": classify.NO_TEXT})
     await session.commit()
 
     ok = failed = 0
@@ -83,10 +83,10 @@ async def classify_source(session: AsyncSession, job: Job, gs: GlobalSource, rou
             error = "модель не вернула разметку для поста"
         for p, _ in batch:
             if p.id in labels:
-                await _upsert(session, org_id, p.id, tax.version, labels[p.id])
+                await upsert_label(session, org_id, p.id, tax.version, labels[p.id])
                 ok += 1
             else:
-                await _upsert(session, org_id, p.id, tax.version, {"error": error})
+                await upsert_label(session, org_id, p.id, tax.version, {"error": error})
                 failed += 1
         await session.commit()
         await set_status(session, job, JobStatus.analyzing,
