@@ -28,6 +28,8 @@ class SourceKind(enum.StrEnum):
     website = "website"
     rss = "rss"
     instagram = "instagram"
+    youtube = "youtube"
+    vk = "vk"
 
 
 class SourceRole(enum.StrEnum):
@@ -79,6 +81,7 @@ class Source(TimestampMixin, Base):
     name: Mapped[str | None] = mapped_column(String(200))
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    competitor_id: Mapped[int | None] = mapped_column(ForeignKey("competitors.id", ondelete="CASCADE"), index=True)
 
     global_source: Mapped[GlobalSource] = relationship(lazy="joined")
 

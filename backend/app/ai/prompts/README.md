@@ -7,7 +7,7 @@
 |-------|-------|------|
 | `classifier/` | ✅ Content Classifier (перенос `SYSTEM` из VM_SM `app/llm/classify.py`, ниша и таксономия подставляются) | 3 |
 | `taxonomy/` | ✅ Предложение тем и ролей организации при онбординге | 3 |
-| `competitor/` | Competitor Analyst | 4 |
+| `competitor/` | ✅ Competitor Analyst (статистика кодом + примеры постов → профиль) | 4 |
 | `post_analysis/` | AI-разбор поста | 5 |
 | `topic/` | Topic Analyst, объяснение gap | 6 |
 | `website/` | Смысл изменения сайта | 7 |

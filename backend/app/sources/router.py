@@ -3,18 +3,15 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, select
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analysis import pipeline
 from app.billing import quotas
-from app.connectors import InvalidSource, detect_kind, get_connector
+from app.connectors import InvalidSource
 from app.core.db import get_session
 from app.core.deps import Tenant, get_tenant, require_role
-from app.jobs import service as jobs
 from app.models import (
     GlobalPost,
-    GlobalSource,
     Job,
     PostAnalysis,
     PostEmbedding,
@@ -24,6 +21,7 @@ from app.models import (
     SourceRole,
     SourceStatus,
 )
+from app.sources import service
 from app.sources.sync import active_job
 
 router = APIRouter(prefix="/sources", tags=["sources"])
@@ -110,7 +108,7 @@ def post_out(p: GlobalPost, a: PostAnalysis | None, has_embedding: bool) -> Post
         has_embedding=has_embedding, analysis={f: getattr(a, f) for f in ANALYSIS_FIELDS} if a else None)
 
 
-async def _out(session: AsyncSession, org_id: int, sources: list[Source]) -> list[SourceOut]:
+async def sources_out(session: AsyncSession, org_id: int, sources: list[Source]) -> list[SourceOut]:
     if not sources:
         return []
     gs_ids = [s.global_source_id for s in sources]
@@ -146,37 +144,25 @@ async def _out(session: AsyncSession, org_id: int, sources: list[Source]) -> lis
 
 
 async def _start_sync(request: Request, session: AsyncSession, tenant: Tenant, source: Source) -> None:
-    job = await jobs.create_job(session, tenant.org_id, "sync_source", {"source_id": source.id},
-                                user_id=tenant.user.id)
-    await jobs.enqueue(getattr(request.app.state, "arq", None), job)
+    await service.start_sync(session, getattr(request.app.state, "arq", None), tenant.org_id, source, tenant.user.id)
 
 
 @router.get("", response_model=list[SourceOut])
 async def list_sources(tenant: Tenant = Depends(get_tenant), session: AsyncSession = Depends(get_session)):
     rows = (await session.execute(tenant.scoped(select(Source), Source).order_by(Source.id))).scalars()
-    return await _out(session, tenant.org_id, list(rows))
+    return await sources_out(session, tenant.org_id, list(rows))
 
 
 @router.post("", response_model=SourceOut, status_code=status.HTTP_201_CREATED)
 async def add_source(body: SourceIn, request: Request, tenant: Tenant = Depends(require_role(Role.member)),
                      session: AsyncSession = Depends(get_session)):
-    kind = body.kind or SourceKind(detect_kind(body.url))
     try:
-        key, url = get_connector(kind).normalize(body.url)
+        kind, key, url = service.resolve(body.url, body.kind)
     except InvalidSource as e:
         raise HTTPException(422, str(e)) from e
-
-    count = (await session.execute(
-        tenant.scoped(select(func.count()).select_from(Source), Source))).scalar_one()
-    await quotas.check(session, tenant.org_id, "sources", current=count)
-
-    await session.execute(insert(GlobalSource).values(kind=kind, key=key, url=url, status=SourceStatus.new, meta={})
-                          .on_conflict_do_nothing(constraint="uq_global_sources_kind_key"))
-    gs = (await session.execute(
-        select(GlobalSource).where(GlobalSource.kind == kind, GlobalSource.key == key))).scalar_one()
-    exists = (await session.execute(tenant.scoped(
-        select(Source.id).where(Source.global_source_id == gs.id), Source))).scalar_one_or_none()
-    if exists:
+    await quotas.check(session, tenant.org_id, "sources", current=await service.count(session, tenant.org_id))
+    gs = await service.global_source(session, kind, key, url)
+    if await service.existing(session, tenant.org_id, gs.id):
         raise HTTPException(status.HTTP_409_CONFLICT, "Этот источник уже добавлен")
 
     source = Source(organization_id=tenant.org_id, global_source_id=gs.id, role=body.role, name=body.name,
@@ -185,7 +171,7 @@ async def add_source(body: SourceIn, request: Request, tenant: Tenant = Depends(
     await session.commit()
     await session.refresh(source, ["global_source"])
     await _start_sync(request, session, tenant, source)
-    return (await _out(session, tenant.org_id, [source]))[0]
+    return (await sources_out(session, tenant.org_id, [source]))[0]
 
 
 @router.get("/{source_id}", response_model=SourceOut)
@@ -193,7 +179,7 @@ async def add_source(body: SourceIn, request: Request, tenant: Tenant = Depends(
 async def source_status(source_id: int, tenant: Tenant = Depends(get_tenant),
                         session: AsyncSession = Depends(get_session)):
     source = await tenant.get(session, Source, source_id)
-    return (await _out(session, tenant.org_id, [source]))[0]
+    return (await sources_out(session, tenant.org_id, [source]))[0]
 
 
 @router.patch("/{source_id}", response_model=SourceOut)
@@ -204,7 +190,7 @@ async def update_source(source_id: int, body: SourcePatch, tenant: Tenant = Depe
         if value is not None or field == "name":
             setattr(source, field, value)
     await session.commit()
-    return (await _out(session, tenant.org_id, [source]))[0]
+    return (await sources_out(session, tenant.org_id, [source]))[0]
 
 
 @router.delete("/{source_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -224,7 +210,7 @@ async def sync_source(source_id: int, request: Request, tenant: Tenant = Depends
     if await active_job(session, tenant.org_id, source.id):
         raise HTTPException(status.HTTP_409_CONFLICT, "Синхронизация уже идёт")
     await _start_sync(request, session, tenant, source)
-    return (await _out(session, tenant.org_id, [source]))[0]
+    return (await sources_out(session, tenant.org_id, [source]))[0]
 
 
 @router.get("/{source_id}/posts", response_model=list[PostOut])
@@ -249,4 +235,4 @@ async def analyze_source(source_id: int, request: Request, tenant: Tenant = Depe
     if await pipeline.start(session, getattr(request.app.state, "arq", None), tenant.org_id, source.id,
                             tenant.user.id) is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "Анализ уже идёт")
-    return (await _out(session, tenant.org_id, [source]))[0]
+    return (await sources_out(session, tenant.org_id, [source]))[0]

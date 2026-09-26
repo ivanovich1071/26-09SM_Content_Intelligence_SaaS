@@ -24,7 +24,8 @@ from app.models import GlobalPost, GlobalSource, Job, JobStatus, PostMetric, Sou
 log = logging.getLogger("sm.sources")
 
 SYNC_INTERVAL = {SourceKind.telegram: timedelta(days=1), SourceKind.rss: timedelta(days=1),
-                 SourceKind.website: timedelta(days=7), SourceKind.instagram: timedelta(days=7)}
+                 SourceKind.website: timedelta(days=7), SourceKind.instagram: timedelta(days=7),
+                 SourceKind.youtube: timedelta(days=1), SourceKind.vk: timedelta(days=1)}
 BATCH = 500
 KEEP_ON_UPDATE = ("first_seen_at", "global_source_id", "external_id")
 ACTIVE = (JobStatus.queued, JobStatus.running, JobStatus.collecting)

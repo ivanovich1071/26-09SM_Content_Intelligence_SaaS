@@ -7,7 +7,7 @@ from app.workers import tasks
 
 
 class WorkerSettings:
-    functions = [tasks.ping, tasks.sync_source, tasks.analyze_source]
+    functions = [tasks.ping, tasks.sync_source, tasks.analyze_source, tasks.profile_competitor]
     cron_jobs = [cron(tasks.schedule_syncs, minute={7})]  # ежечасно; сроки источников проверяет schedule_due
     redis_settings = RedisSettings.from_dsn(settings.redis_url)
     max_jobs = 10

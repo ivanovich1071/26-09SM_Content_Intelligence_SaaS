@@ -47,18 +47,21 @@ backend/app/
   jobs/          service (create/enqueue/set_status), /jobs, /jobs/ping, /jobs/{id}/cancel
   connectors/    base.py (SourceConnector, ContentItem, canonical_url, content_hash), http.py (Fetcher: лимит
                  на домен через Redis, запрет внутренних адресов), telegram.py (t.me/s из VM_SM), rss.py, website.py,
-                 instagram.py (Apify, APIFY_TOKEN)
+                 instagram.py (Apify, APIFY_TOKEN), youtube.py (RSS канала, без ключа), vk.py (VK_SERVICE_TOKEN)
   analysis/      taxonomy.py (универсальные поля + темы/роли организации, suggest), classify.py (Content Classifier,
                  пачки по 10), metrics.py (ER, медианы, overperformance), dedupe.py (hash/canonical + pgvector),
                  embed.py, pipeline.py (задача analyze_source), router.py (/taxonomy, /market/overview)
-  sources/       sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
+  competitors/   stats.py (статистика контента кодом), profile.py (Competitor Analyst, задача profile_competitor),
+                 router.py (/competitors, /discover, /{id}/sources|profile|posts)
+  sources/       service.py (resolve/global_source/start_sync — общий для /sources и конкурентов), sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
-                 analyze_source)
-backend/migrations/versions/0001_saas_core.py, 0002_sources.py, 0003_market_intelligence.py
+                 analyze_source → profile_competitor)
+backend/migrations/versions/0001_saas_core.py … 0004_competitors.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы>
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
-  components/ComingSoon.tsx (заглушки ещё не реализованных вкладок)
+  components/ComingSoon.tsx (заглушки ещё не реализованных вкладок), PostList.tsx (посты с метриками и разметкой)
+  lib/format.ts (иконки и названия площадок, форматирование чисел и дат)
 ```
 
 ---
@@ -113,4 +116,6 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
 - ✅ EPIC 3 — Market Intelligence: таксономия организации (+ подсказка модели), разметка пачками, эмбеддинги
   (pgvector, HNSW), ER и overperformance, дубли (hash/canonical/семантические), `/market/overview`,
   UI «Компания» и блок рынка на «Обзоре», 111 тестов
-- 🔲 Далее: EPIC 4 — Конкуренты (см. `ROADMAP.md`)
+- ✅ EPIC 4 — Конкуренты: CRUD, автопоиск соцсетей на сайте, AI-профиль, аналитика и таймлайн по неделям,
+  коннекторы YouTube (без ключа) и VK (VK_SERVICE_TOKEN), UI список + карточка, 139 тестов
+- 🔲 Далее: EPIC 5 — Лента (см. `ROADMAP.md`)

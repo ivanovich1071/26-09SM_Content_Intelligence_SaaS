@@ -1,13 +1,13 @@
 "use client";
 
-import { Camera, ChevronDown, ChevronRight, Globe, Loader2, RefreshCw, Rss, Send, Sparkles, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ComingSoon";
-import { api, type Post, type Source, type SourceKind, type SourceRole, type SourceStatus } from "@/lib/api";
+import { api, type Post, type Source, type SourceRole, type SourceStatus } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { PostList } from "@/components/PostList";
+import { fmtDate, fmtNum, KIND_ICON, KIND_LABELS } from "@/lib/format";
 
-const KIND_ICON = { telegram: Send, website: Globe, rss: Rss, instagram: Camera } satisfies Record<SourceKind, unknown>;
-const KIND_LABELS: Record<SourceKind, string> = { telegram: "Telegram", website: "Сайт", rss: "RSS", instagram: "Instagram" };
 const ROLE_LABELS: Record<SourceRole, string> = { own: "Свой", competitor: "Конкурент", market: "Рынок" };
 const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
   new: { label: "Ожидает сбора", cls: "text-muted" },
@@ -17,8 +17,6 @@ const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
 };
 const ACTIVE = new Set(["queued", "running", "collecting", "analyzing"]);
 
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }) : "—");
-const fmtNum = (n: number | null) => (n === null ? "—" : n.toLocaleString("ru-RU"));
 
 function jobNote(s: Source): { text: string; cls: string } | null {
   const j = s.last_job;
@@ -53,8 +51,6 @@ function analysisNote(s: Source): { text: string; cls: string } | null {
   return { text: [parts.join(", "), warn].filter(Boolean).join(". "), cls: warn ? "text-warn" : "text-muted" };
 }
 
-const pct = (n: number | null) => (n === null ? null : `${n.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}%`);
-const label = (v: string | null) => (v ? v.replaceAll("_", " ") : null);
 
 function Posts({ sourceId }: { sourceId: number }) {
   const [posts, setPosts] = useState<Post[] | null>(null);
@@ -62,41 +58,7 @@ function Posts({ sourceId }: { sourceId: number }) {
     api<Post[]>(`/sources/${sourceId}/posts?limit=5`).then(setPosts).catch(() => setPosts([]));
   }, [sourceId]);
   if (posts === null) return <p className="text-sm text-muted">Загрузка…</p>;
-  if (posts.length === 0) return <p className="text-sm text-muted">Постов пока нет.</p>;
-  return (
-    <ul className="space-y-3">
-      {posts.map((p) => (
-        <li key={p.id} className="text-sm">
-          <div className="flex flex-wrap gap-x-3 text-xs text-muted">
-            <span>{fmtDate(p.published_at)}</span>
-            <span>{p.media_type}</span>
-            {p.views !== null && <span>просмотры {fmtNum(p.views)}</span>}
-            {p.likes !== null && <span>реакции {fmtNum(p.likes)}</span>}
-            {p.er !== null && <span>ER {pct(p.er)}</span>}
-            {p.overperformance !== null && (
-              <span className={p.overperformance >= 1.5 ? "font-semibold text-good" : ""}
-                    title="Во сколько раз лучше медианы источника">×{p.overperformance.toLocaleString("ru-RU", { maximumFractionDigits: 1 })}</span>
-            )}
-            {p.duplicate_of_id !== null && <span className="text-warn">дубль</span>}
-            {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="text-accent hover:underline">открыть</a>}
-          </div>
-          {p.title && <p className="font-medium">{p.title}</p>}
-          <p className="line-clamp-3 whitespace-pre-line">{p.text || "(без текста)"}</p>
-          {p.analysis && !p.analysis.error && (
-            <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
-              {[p.analysis.topic, label(p.analysis.content_type), label(p.analysis.funnel_stage),
-                p.analysis.hook_type !== "нет" ? `хук: ${label(p.analysis.hook_type)}` : null,
-                p.analysis.cta_type !== "нет" ? `CTA: ${label(p.analysis.cta_type)}` : null,
-                p.analysis.target_role].filter(Boolean).map((t, i) => (
-                <span key={i} className={`rounded-md px-1.5 py-0.5 ${i === 0 ? "bg-accent-soft text-accent" : "bg-bg text-muted"}`}>{t}</span>
-              ))}
-            </div>
-          )}
-          {p.analysis?.summary && <p className="mt-1 text-xs text-muted">{p.analysis.summary}</p>}
-        </li>
-      ))}
-    </ul>
-  );
+  return <PostList posts={posts} />;
 }
 
 export default function SourcesPage() {
@@ -149,14 +111,14 @@ export default function SourcesPage() {
     <>
       <PageHeader
         title="Источники"
-        subtitle="Каналы и сайты, которые собираем: ваши, конкурентов и рынка. Telegram и RSS обновляются ежедневно, сайты и Instagram — еженедельно."
+        subtitle="Каналы и сайты, которые собираем: ваши, конкурентов и рынка. Telegram, VK, YouTube и RSS обновляются ежедневно, сайты и Instagram — еженедельно."
       />
 
       {canManage && (
         <form onSubmit={add} className="card mb-4 flex flex-wrap items-end gap-3">
           <div className="min-w-72 flex-1">
             <label className="label" htmlFor="url">Адрес</label>
-            <input id="url" name="url" required className="input" placeholder="t.me/канал, instagram.com/профиль, сайт.by или ссылка на RSS" />
+            <input id="url" name="url" required className="input" placeholder="t.me/канал, instagram.com/…, youtube.com/@…, vk.com/…, сайт или RSS" />
           </div>
           <div>
             <label className="label" htmlFor="kind">Тип</label>
@@ -202,7 +164,7 @@ export default function SourcesPage() {
                     <a href={s.url} target="_blank" rel="noreferrer" className="text-xs text-muted hover:text-accent">{s.url}</a>
                     <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
                       <span className={STATUS[s.status].cls}>{STATUS[s.status].label}</span>
-                      {(s.kind === "telegram" || s.kind === "instagram") && <span>Подписчики: {fmtNum(s.followers)}</span>}
+                      {s.followers !== null && <span>Подписчики: {fmtNum(s.followers)}</span>}
                       <span>Постов: {fmtNum(s.posts_count)}</span>
                       {s.median_views !== null && <span>Медиана просмотров: {fmtNum(Math.round(s.median_views))}</span>}
                       <span className="text-muted">Обновлён: {fmtDate(s.last_synced_at)}</span>

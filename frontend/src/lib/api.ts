@@ -97,7 +97,7 @@ export type Job = {
   error: string | null;
   created_at: string;
 };
-export type SourceKind = "telegram" | "website" | "rss" | "instagram";
+export type SourceKind = "telegram" | "website" | "rss" | "instagram" | "youtube" | "vk";
 export type SourceRole = "own" | "competitor" | "market";
 export type SourceStatus = "new" | "ok" | "error" | "unavailable";
 export type Source = {
@@ -193,4 +193,59 @@ export type MarketOverview = {
     topic: string | null;
     summary: string | null;
   }[];
+};
+export type Share = { value: string; count: number; share: number };
+export type ContentStats = {
+  days: number;
+  posts: number;
+  analyzed: number;
+  posts_per_week: number;
+  median_views: number | null;
+  median_er: number | null;
+  formats: Share[];
+  topics: Share[];
+  content_types: Share[];
+  funnel: Share[];
+  hooks: Share[];
+  ctas: Share[];
+  tone: Share[];
+  cta_share: number | null;
+  case_share: number | null;
+  numbers_share: number | null;
+  offer_share: number | null;
+  lead_magnet_share: number | null;
+  weekly: { week: string; posts: number; median_er: number | null }[];
+};
+export type CompetitorProfile = {
+  summary: string;
+  positioning: string;
+  audience: string;
+  main_topics: string[];
+  formats: string[];
+  tone_of_voice: string;
+  posting_frequency: string;
+  ctas: string[];
+  content_patterns: string[];
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+};
+export type Competitor = {
+  id: number;
+  name: string;
+  website: string | null;
+  notes: string | null;
+  created_at: string;
+  sources: Source[];
+  stats: ContentStats;
+  profile: { stats: ContentStats; ai: CompetitorProfile } | null;
+  profile_at: string | null;
+  profile_job: (Job & { finished_at: string | null }) | null;
+};
+export type Discovery = {
+  website: string;
+  title: string | null;
+  description: string | null;
+  feed_url: string | null;
+  social_links: { url: string; kind: SourceKind | null; supported: boolean; needs_key: boolean }[];
 };

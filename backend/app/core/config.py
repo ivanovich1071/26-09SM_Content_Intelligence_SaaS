@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     semantic_dup_distance: float = 0.05     # косинусное расстояние: ≤ 0.05 — один и тот же текст в пересказе
     apify_token: str = ""                 # Instagram через Apify; без ключа такие источники «недоступны»
     apify_timeout_sec: float = 300
+    vk_service_token: str = ""            # сервисный ключ приложения VK; без него сообщества VK «недоступны»
 
 
 @lru_cache

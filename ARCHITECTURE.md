@@ -135,6 +135,7 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 
 Реализовано в миграции 0001: organizations, users, memberships, plans, subscriptions, usage_events, jobs, llm_requests.
 Миграция 0002: global_sources, sources, global_posts, post_metrics.
+Миграция 0004: competitors, sources.competitor_id, source_kind += youtube, vk.
 Миграция 0003: taxonomies, post_analysis, post_embeddings (vector(1536), HNSW cosine); метрики в global_posts
 (engagement, er, overperformance, duplicate_of_id) и базовая линия в global_sources (median_views, median_engagement).
 
