@@ -19,7 +19,7 @@ async def test_foreign_org_header_is_404(client):
     b = await register(client, "B")
     headers = {"Authorization": f"Bearer {b.token}", "X-Organization-Id": str(a.org_id)}
     for url in ("/api/v1/organizations/current", "/api/v1/organizations/current/members", "/api/v1/jobs",
-                "/api/v1/billing/usage"):
+                "/api/v1/billing/usage", "/api/v1/sources"):
         assert (await client.get(url, headers=headers)).status_code == 404, url
 
 
@@ -52,3 +52,18 @@ async def test_user_in_two_orgs_switches_by_header(client):
     headers = {"Authorization": f"Bearer {a.token}", "X-Organization-Id": str(second["id"])}
     assert (await client.get(f"/api/v1/jobs/{job['id']}", headers=headers)).status_code == 404
     assert (await client.get("/api/v1/organizations/current", headers=headers)).json()["name"] == "Клиент агентства"
+
+
+async def test_sources_isolated(client):
+    a = await register(client, "A")
+    b = await register(client, "B")
+    src = (await a.post("/api/v1/sources", json={"url": "@isolation_check"})).json()
+    base = f"/api/v1/sources/{src['id']}"
+
+    for url in (base, f"{base}/status", f"{base}/posts"):
+        assert (await b.get(url)).status_code == 404, url
+    assert (await b.post(f"{base}/sync")).status_code == 404
+    assert (await b.patch(base, json={"name": "чужой"})).status_code == 404
+    assert (await b.delete(base)).status_code == 404
+    assert (await b.get("/api/v1/sources")).json() == []
+    assert (await a.get(base)).json()["name"] is None

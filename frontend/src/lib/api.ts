@@ -97,3 +97,38 @@ export type Job = {
   error: string | null;
   created_at: string;
 };
+export type SourceKind = "telegram" | "website" | "rss" | "instagram";
+export type SourceRole = "own" | "competitor" | "market";
+export type SourceStatus = "new" | "ok" | "error" | "unavailable";
+export type Source = {
+  id: number;
+  kind: SourceKind;
+  key: string;
+  url: string;
+  role: SourceRole;
+  name: string | null;
+  enabled: boolean;
+  title: string | null;
+  description: string | null;
+  followers: number | null;
+  status: SourceStatus;
+  last_error: string | null;
+  last_synced_at: string | null;
+  posts_count: number;
+  meta: { feed_url?: string | null; social_links?: string[] };
+  last_job: (Job & { finished_at: string | null }) | null;
+  created_at: string;
+};
+export type Post = {
+  id: number;
+  external_id: string;
+  url: string | null;
+  title: string | null;
+  text: string;
+  published_at: string | null;
+  media_type: string;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+};
