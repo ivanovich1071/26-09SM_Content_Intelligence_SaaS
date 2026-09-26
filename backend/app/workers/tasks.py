@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import SessionLocal
 from app.jobs.service import set_status
 from app.models import Job, JobStatus
+from app.sources import sync
 
 log = logging.getLogger("sm.worker")
 
@@ -24,7 +25,9 @@ async def run_job(job_id: int, handler: Handler) -> None:
         except Exception as e:  # noqa: BLE001 — любая ошибка задачи фиксируется в jobs
             log.exception("job %s (%s) упал", job_id, job.kind)
             await session.rollback()
-            await set_status(session, job, JobStatus.failed, error=f"{type(e).__name__}: {e}")
+            # Ошибки с user_facing=True уже сформулированы для пользователя — без имени класса
+            message = str(e) if getattr(e, "user_facing", False) else f"{type(e).__name__}: {e}"
+            await set_status(session, job, JobStatus.failed, error=message)
             return
         await session.refresh(job)
         if job.status != JobStatus.cancelled:
@@ -37,3 +40,15 @@ async def _ping(session: AsyncSession, job: Job) -> dict:
 
 async def ping(ctx: dict, job_id: int) -> None:
     await run_job(job_id, _ping)
+
+
+async def sync_source(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, sync.handle_sync_source)
+
+
+async def schedule_syncs(ctx: dict) -> None:
+    """Cron: Telegram и RSS — раз в сутки, сайты — раз в неделю (см. sync.SYNC_INTERVAL)."""
+    async with SessionLocal() as session:
+        created = await sync.schedule_due(session, ctx.get("redis"))
+    if created:
+        log.info("Запланировано синхронизаций: %s", created)

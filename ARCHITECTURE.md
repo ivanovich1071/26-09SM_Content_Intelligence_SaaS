@@ -78,6 +78,12 @@ class SourceConnector(ABC):
     async def get_metrics(self, item) -> ItemMetrics
     async def health_check(self, source) -> HealthStatus
 ```
+Реализованная сигнатура (EPIC 2) — методы получают `Fetcher`, ключ и URL глобального источника:
+`normalize(raw) -> (key, url)` без сети, `get_profile(http, key, url, meta)`,
+`collect(http, key, url, meta, since=, known_ids=) -> CollectResult`. Сеть — только через `connectors/http.Fetcher`:
+пауза между запросами к домену (Redis `SET NX PX`, общий для воркеров), ручные редиректы с проверкой, что адрес
+публичный (SSRF), ограничение размера ответа. `WebsiteConnector` находит RSS/Atom блога (autodiscovery и типовые пути).
+
 Адаптеры: `TelegramConnector` (t.me/s из VM_SM), `WebsiteConnector`, `RSSConnector`, `YouTubeConnector`,
 `VKConnector`, `InstagramConnector` (Apify), `SearchConnector`. Provider-specific данные остаются в `raw_payload`.
 
@@ -127,6 +133,7 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | System | `jobs`, `llm_requests`, `audit_log` |
 
 Реализовано в миграции 0001: organizations, users, memberships, plans, subscriptions, usage_events, jobs, llm_requests.
+Миграция 0002: global_sources, sources, global_posts, post_metrics.
 
 ## 7. Мультитенантность
 1. JWT содержит `sub` (user_id); активная организация — заголовок `X-Organization-Id` (или первая доступная).

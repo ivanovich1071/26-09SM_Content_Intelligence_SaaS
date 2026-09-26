@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     embedding_model: str = "openai/text-embedding-3-small"
     embedding_dim: int = 1536
 
+    # Сбор источников
+    user_agent: str = "Mozilla/5.0 (compatible; SMContentIntelligence/0.1; +https://github.com/ivanovich1071)"
+    source_history_days: int = 90         # глубина первого сбора
+    source_fresh_minutes: int = 30        # источник, собранный недавно (другим клиентом), не собираем повторно
+    domain_min_interval_sec: float = 1.5  # пауза между запросами к одному домену — общая для всех воркеров
+    telegram_max_pages: int = 15          # ~20 постов на странице t.me/s
+    fetch_max_bytes: int = 5_000_000
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -44,8 +44,11 @@ backend/app/
   ai/            openrouter.py (провайдер, 1 попытка), router.py (AIRouter: модель по задаче, квота, повторы,
                  схема, учёт), embeddings.py, prompts/
   jobs/          service (create/enqueue/set_status), /jobs, /jobs/ping, /jobs/{id}/cancel
-  workers/       settings.py (arq WorkerSettings), tasks.py (run_job-обёртка со статусами)
-backend/migrations/versions/0001_saas_core.py
+  connectors/    base.py (SourceConnector, ContentItem, canonical_url, content_hash), http.py (Fetcher: лимит
+                 на домен через Redis, запрет внутренних адресов), telegram.py (t.me/s из VM_SM), rss.py, website.py
+  sources/       sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
+  workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source)
+backend/migrations/versions/0001_saas_core.py, 0002_sources.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы>
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
@@ -62,6 +65,9 @@ frontend/src/
 - **AI:** только `AIRouter(session).run(task, system, user, org_id=..., operation=..., schema=...)`.
   Не вызывать OpenRouter напрямую, не писать Model ID в модулях.
 - **Квоты:** `quotas.check(session, org_id, "audits_month")` до постановки дорогой задачи; после — `usage.record(...)`.
+- **Источники:** `global_sources`/`global_posts` общие для всех клиентов (канал собирается один раз), организация
+  видит их через свою `sources`. Посты читать только через `Source` организации. Сеть в коннекторах — только через
+  `Fetcher` (лимит на домен, SSRF-защита); в тестах — `httpx.MockTransport` и `check_hosts=False`.
 - **Долгие операции:** `jobs.service.create_job` + `enqueue`, обработчик — через `workers.tasks.run_job`.
 - **Числа считает код**, модель интерпретирует; при нехватке данных — явно «Недостаточно данных».
 - Промпты — в `backend/app/ai/prompts/<агент>/`.
@@ -93,4 +99,6 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
 - ✅ EPIC 0 — аудит VM_SM (`docs/vmsm-audit/`)
 - ✅ EPIC 1 — SaaS Core: регистрация, JWT, организации, роли, приглашения, тарифы и квоты, usage, AI Router,
   jobs + arq-воркер, `/health`, фронт (вход, меню всех вкладок, Команда, Тариф, Использование), 28 тестов, CI
-- 🔲 Далее: EPIC 2 — Source Layer (см. `ROADMAP.md`)
+- ✅ EPIC 2 — Source Layer: коннекторы Telegram / сайт / RSS, `/sources`, задача `sync_source`, cron
+  (Telegram и RSS — ежедневно, сайты — еженедельно), UI «Настройки → Источники», 82 теста
+- 🔲 Далее: EPIC 3 — Market Intelligence (см. `ROADMAP.md`)
