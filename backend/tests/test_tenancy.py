@@ -22,7 +22,8 @@ async def test_foreign_org_header_is_404(client):
                 "/api/v1/billing/usage", "/api/v1/sources", "/api/v1/taxonomy", "/api/v1/market/overview",
                 "/api/v1/competitors", "/api/v1/posts", "/api/v1/topics", "/api/v1/topics/gaps",
                 "/api/v1/websites", "/api/v1/websites/changes", "/api/v1/audits",
-                "/api/v1/strategy/opportunities", "/api/v1/brand", "/api/v1/factory/projects"):
+                "/api/v1/strategy/opportunities", "/api/v1/brand", "/api/v1/factory/projects",
+                "/api/v1/digests", "/api/v1/digests/schedule"):
         assert (await client.get(url, headers=headers)).status_code == 404, url
 
 

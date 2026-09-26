@@ -8,6 +8,7 @@ from app.analysis import pipeline
 from app.audits import pipeline as audit_pipeline
 from app.competitors import profile
 from app.core.db import SessionLocal
+from app.digests import generator as digest_generator
 from app.factory import pipeline as factory_pipeline
 from app.jobs.service import set_status
 from app.models import Job, JobStatus
@@ -106,3 +107,15 @@ async def build_opportunities(ctx: dict, job_id: int) -> None:
 
 async def generate_content(ctx: dict, job_id: int) -> None:
     await run_job(job_id, factory_pipeline.handle_generate_content)
+
+
+async def generate_digest(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, digest_generator.handle_generate_digest)
+
+
+async def schedule_digests(ctx: dict) -> None:
+    """Cron: ежечасно — дайджесты организаций, у которых подошло время по расписанию."""
+    async with SessionLocal() as session:
+        created = await digest_generator.schedule_due(session, ctx.get("redis"))
+    if created:
+        log.info("Запланировано дайджестов: %s", created)

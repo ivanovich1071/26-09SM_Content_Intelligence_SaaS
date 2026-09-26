@@ -19,6 +19,7 @@ from app.billing.router import router as billing_router
 from app.competitors.router import router as competitors_router
 from app.core.config import settings
 from app.core.db import SessionLocal
+from app.digests.router import router as digests_router
 from app.factory.router import brand_router
 from app.factory.router import router as factory_router
 from app.jobs.router import router as jobs_router
@@ -56,7 +57,7 @@ api = APIRouter(prefix="/api/v1")
 for r in (auth_router, org_router, billing_router, jobs_router, sources_router, taxonomy_router,
           market_router, competitors_router, posts_router,
           topics_router, websites_router, audits_router, public_audits_router,
-          strategy_router, brand_router, factory_router):
+          strategy_router, brand_router, factory_router, digests_router):
     api.include_router(r)
 app.include_router(api)
 

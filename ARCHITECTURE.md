@@ -46,7 +46,7 @@
 | 10 | Content Writer | `factory/pipeline.py` + `prompts/writer` | write | RAG-контекст + бренд → черновик |
 | 11 | Content Editor | `factory/pipeline.py` + `prompts/editor` | write | Версия + инструкция + замечания QA → версия |
 | 12 | Content QA | `factory/qa.py` (код) + `prompts/qa` | qa | Текст + контекст → проверки |
-| 13 | Digest Generator | `digests/generator.py` | analyze | Период → дайджест |
+| 13 | Digest Generator | `digests/generator.py` + `prompts/digest` | analyze | Цифры периода (код) → выводы, рекомендации, идеи |
 
 ## 3. AI Router
 
@@ -112,7 +112,7 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | `build_opportunities` | кандидаты тем (код) → Strategist → `content_opportunities` |
 | `generate_content` | write: RAG-контекст → Writer → QA → версия; edit: Editor → QA → версия; qa: перепроверка |
 | `run_content_qa` | QA → отчёт проверок |
-| `generate_digest` | период → метрики → Digest Generator → рассылка |
+| `generate_digest` | период → цифры (код) → Digest Generator / шаблон → email по SMTP; cron `schedule_digests` ежечасно |
 
 Статусы: `queued → running → collecting → analyzing → generating → validating → completed | failed | cancelled`.
 В `jobs`: stage, progress 0–100, error, result_ref. Фронт опрашивает `GET /jobs/{id}` (позже SSE).
