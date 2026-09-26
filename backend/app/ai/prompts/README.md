@@ -1,0 +1,19 @@
+# Промпты агентов
+
+Каждый логический агент — отдельная папка: `system.md` (роль и правила), `schema.py` или описание JSON-ответа.
+Промпты не пишутся строками в коде модулей.
+
+| Папка | Агент | Эпик |
+|-------|-------|------|
+| `classifier/` | Content Classifier (перенос `TAXONOMY`/`SYSTEM` из VM_SM `app/llm/classify.py`) | 3 |
+| `competitor/` | Competitor Analyst | 4 |
+| `post_analysis/` | AI-разбор поста | 5 |
+| `topic/` | Topic Analyst, объяснение gap | 6 |
+| `website/` | Смысл изменения сайта | 7 |
+| `audit/` | Content Auditor (перенос из VM_SM `app/audit/content_audit.py`) | 8 |
+| `strategy/` | Content Strategist | 9 |
+| `writer/`, `editor/`, `qa/` | Контент Завод (перенос форматов из VM_SM `app/factory.py`) | 10 |
+| `digest/` | Digest Generator | 11 |
+
+Общие правила во всех промптах: опираться только на переданные данные; числа не выдумывать; факты, которых нет,
+— шаблоном `[что подставить]`; контент конкурентов — для анализа, не для копирования; ответ — строго JSON.
