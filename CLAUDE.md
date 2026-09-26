@@ -37,7 +37,8 @@
 backend/app/
   core/          config (все ключи и Model ID), db, security (JWT/bcrypt), deps (get_tenant, require_role)
   models/        tenancy (organizations/users/memberships/invitations), billing (plans/subscriptions/usage_events),
-                 system (jobs/llm_requests)
+                 system (jobs/llm_requests), sources (global_sources/sources/global_posts/post_metrics),
+                 analysis (taxonomies/post_analysis/post_embeddings — pgvector)
   auth/          /auth/register|login|refresh|me
   organizations/ /organizations, /organizations/current(/members|/invitations)
   billing/       plans.py (тарифы в коде → upsert при старте), quotas.py (QuotaExceeded 402), usage.py, /billing/*
@@ -47,9 +48,13 @@ backend/app/
   connectors/    base.py (SourceConnector, ContentItem, canonical_url, content_hash), http.py (Fetcher: лимит
                  на домен через Redis, запрет внутренних адресов), telegram.py (t.me/s из VM_SM), rss.py, website.py,
                  instagram.py (Apify, APIFY_TOKEN)
+  analysis/      taxonomy.py (универсальные поля + темы/роли организации, suggest), classify.py (Content Classifier,
+                 пачки по 10), metrics.py (ER, медианы, overperformance), dedupe.py (hash/canonical + pgvector),
+                 embed.py, pipeline.py (задача analyze_source), router.py (/taxonomy, /market/overview)
   sources/       sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
-  workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source)
-backend/migrations/versions/0001_saas_core.py, 0002_sources.py
+  workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
+                 analyze_source)
+backend/migrations/versions/0001_saas_core.py, 0002_sources.py, 0003_market_intelligence.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы>
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
@@ -69,6 +74,9 @@ frontend/src/
 - **Источники:** `global_sources`/`global_posts` общие для всех клиентов (канал собирается один раз), организация
   видит их через свою `sources`. Посты читать только через `Source` организации. Сеть в коннекторах — только через
   `Fetcher` (лимит на домен, SSRF-защита); в тестах — `httpx.MockTransport` и `check_hosts=False`.
+- **Разметка:** `post_analysis` — tenant-таблица (у каждой организации своя таксономия); эмбеддинги и метрики поста
+  общие. Правка таксономии повышает `version` — посты старой версии переразмечаются. Дубли (`duplicate_of_id`)
+  не размечаются и не векторизуются. Промпты — `ai/prompts/<агент>/*.md`, загрузка `prompts.load("classifier/system")`.
 - **Долгие операции:** `jobs.service.create_job` + `enqueue`, обработчик — через `workers.tasks.run_job`.
 - **Числа считает код**, модель интерпретирует; при нехватке данных — явно «Недостаточно данных».
 - Промпты — в `backend/app/ai/prompts/<агент>/`.
@@ -102,4 +110,7 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
   jobs + arq-воркер, `/health`, фронт (вход, меню всех вкладок, Команда, Тариф, Использование), 28 тестов, CI
 - ✅ EPIC 2 — Source Layer: коннекторы Telegram / сайт / RSS / Instagram (Apify), `/sources`, задача `sync_source`, cron
   (Telegram и RSS — ежедневно, сайты и Instagram — еженедельно), UI «Настройки → Источники», 95 тестов
-- 🔲 Далее: EPIC 3 — Market Intelligence (см. `ROADMAP.md`)
+- ✅ EPIC 3 — Market Intelligence: таксономия организации (+ подсказка модели), разметка пачками, эмбеддинги
+  (pgvector, HNSW), ER и overperformance, дубли (hash/canonical/семантические), `/market/overview`,
+  UI «Компания» и блок рынка на «Обзоре», 111 тестов
+- 🔲 Далее: EPIC 4 — Конкуренты (см. `ROADMAP.md`)

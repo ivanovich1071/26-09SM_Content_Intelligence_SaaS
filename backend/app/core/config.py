@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     domain_min_interval_sec: float = 1.5  # пауза между запросами к одному домену — общая для всех воркеров
     telegram_max_pages: int = 15          # ~20 постов на странице t.me/s
     fetch_max_bytes: int = 5_000_000
+    classify_max_posts_per_job: int = 300  # разметка — пачками по 10, остальное доделает следующий sync
+    embed_max_posts_per_job: int = 1000
+    semantic_dup_distance: float = 0.05     # косинусное расстояние: ≤ 0.05 — один и тот же текст в пересказе
     apify_token: str = ""                 # Instagram через Apify; без ключа такие источники «недоступны»
     apify_timeout_sec: float = 300
 

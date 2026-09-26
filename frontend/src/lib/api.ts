@@ -117,6 +117,9 @@ export type Source = {
   posts_count: number;
   meta: { feed_url?: string | null; social_links?: string[] };
   last_job: (Job & { finished_at: string | null }) | null;
+  last_analysis: (Job & { finished_at: string | null }) | null;
+  median_views: number | null;
+  analyzed_count: number;
   created_at: string;
 };
 export type Post = {
@@ -131,4 +134,63 @@ export type Post = {
   likes: number | null;
   comments: number | null;
   shares: number | null;
+  engagement: number | null;
+  er: number | null;
+  overperformance: number | null;
+  duplicate_of_id: number | null;
+  has_embedding: boolean;
+  analysis: PostAnalysis | null;
+};
+export type PostAnalysis = {
+  content_type: string | null;
+  funnel_stage: string | null;
+  hook_type: string | null;
+  cta_type: string | null;
+  proof_type: string | null;
+  tone: string | null;
+  value_type: string | null;
+  topic: string | null;
+  target_role: string | null;
+  has_case: boolean | null;
+  has_numbers: boolean | null;
+  has_offer: boolean | null;
+  has_lead_magnet: boolean | null;
+  summary: string | null;
+  error: string | null;
+};
+export type Taxonomy = {
+  topics: string[];
+  roles: string[];
+  niche: string | null;
+  version: number;
+  source: string | null;
+  is_default: boolean;
+  universal: Record<string, string[]>;
+  updated_at: string | null;
+};
+export type TaxonomySuggestion = {
+  niche: string;
+  topics: string[];
+  roles: string[];
+  rationale: string;
+  based_on: { sources: number; posts: number };
+};
+export type RoleStats = { posts: number; analyzed: number; median_er: number | null; posts_per_week: number };
+export type MarketOverview = {
+  days: number;
+  by_role: Record<SourceRole, RoleStats>;
+  topics: { topic: string; own: number; competitor: number; market: number; total: number }[];
+  top_posts: {
+    id: number;
+    source: string;
+    role: SourceRole;
+    url: string | null;
+    text: string;
+    published_at: string | null;
+    views: number | null;
+    er: number | null;
+    overperformance: number;
+    topic: string | null;
+    summary: string | null;
+  }[];
 };

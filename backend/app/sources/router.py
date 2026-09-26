@@ -2,16 +2,28 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.analysis import pipeline
 from app.billing import quotas
 from app.connectors import InvalidSource, detect_kind, get_connector
 from app.core.db import get_session
 from app.core.deps import Tenant, get_tenant, require_role
 from app.jobs import service as jobs
-from app.models import GlobalPost, GlobalSource, Job, Role, Source, SourceKind, SourceRole, SourceStatus
+from app.models import (
+    GlobalPost,
+    GlobalSource,
+    Job,
+    PostAnalysis,
+    PostEmbedding,
+    Role,
+    Source,
+    SourceKind,
+    SourceRole,
+    SourceStatus,
+)
 from app.sources.sync import active_job
 
 router = APIRouter(prefix="/sources", tags=["sources"])
@@ -59,6 +71,9 @@ class SourceOut(BaseModel):
     posts_count: int
     meta: dict
     last_job: JobBrief | None
+    last_analysis: JobBrief | None
+    median_views: float | None
+    analyzed_count: int  # размечено этой организацией (без ошибок)
     created_at: datetime
 
 
@@ -74,8 +89,25 @@ class PostOut(BaseModel):
     likes: int | None
     comments: int | None
     shares: int | None
+    engagement: int | None
+    er: float | None
+    overperformance: float | None
+    duplicate_of_id: int | None
+    has_embedding: bool = False
+    analysis: dict | None = None
 
-    model_config = {"from_attributes": True}
+
+ANALYSIS_FIELDS = ("content_type", "funnel_stage", "hook_type", "cta_type", "proof_type", "tone", "value_type",
+                   "topic", "target_role", "has_case", "has_numbers", "has_offer", "has_lead_magnet", "summary",
+                   "error", "taxonomy_version", "analyzed_at")
+
+
+def post_out(p: GlobalPost, a: PostAnalysis | None, has_embedding: bool) -> PostOut:
+    return PostOut(
+        id=p.id, external_id=p.external_id, url=p.url, title=p.title, text=p.text, published_at=p.published_at,
+        media_type=p.media_type, views=p.views, likes=p.likes, comments=p.comments, shares=p.shares,
+        engagement=p.engagement, er=p.er, overperformance=p.overperformance, duplicate_of_id=p.duplicate_of_id,
+        has_embedding=has_embedding, analysis={f: getattr(a, f) for f in ANALYSIS_FIELDS} if a else None)
 
 
 async def _out(session: AsyncSession, org_id: int, sources: list[Source]) -> list[SourceOut]:
@@ -85,23 +117,31 @@ async def _out(session: AsyncSession, org_id: int, sources: list[Source]) -> lis
     counts = dict((await session.execute(
         select(GlobalPost.global_source_id, func.count()).where(GlobalPost.global_source_id.in_(gs_ids))
         .group_by(GlobalPost.global_source_id))).all())
+    analyzed = dict((await session.execute(
+        select(GlobalPost.global_source_id, func.count()).join(PostAnalysis, PostAnalysis.post_id == GlobalPost.id)
+        .where(GlobalPost.global_source_id.in_(gs_ids), PostAnalysis.organization_id == org_id,
+               PostAnalysis.error.is_(None))
+        .group_by(GlobalPost.global_source_id))).all())
     src_ids = {s.id for s in sources}
-    last_jobs: dict[int, Job] = {}
+    last_jobs: dict[tuple[str, int], Job] = {}
     for job in (await session.execute(
-            select(Job).where(Job.organization_id == org_id, Job.kind == "sync_source")
-            .order_by(Job.id.desc()).limit(500))).scalars():
+            select(Job).where(Job.organization_id == org_id, Job.kind.in_(("sync_source", "analyze_source")))
+            .order_by(Job.id.desc()).limit(1000))).scalars():
         sid = (job.params or {}).get("source_id")
-        if sid in src_ids and sid not in last_jobs:
-            last_jobs[sid] = job
+        if sid in src_ids and (job.kind, sid) not in last_jobs:
+            last_jobs[(job.kind, sid)] = job
     out = []
     for s in sources:
         gs = s.global_source
-        job = last_jobs.get(s.id)
+        job = last_jobs.get(("sync_source", s.id))
+        analysis_job = last_jobs.get(("analyze_source", s.id))
         out.append(SourceOut(
             id=s.id, kind=gs.kind, key=gs.key, url=gs.url, role=s.role, name=s.name, enabled=s.enabled,
             title=gs.title, description=gs.description, followers=gs.followers, status=gs.status,
             last_error=gs.last_error, last_synced_at=gs.last_synced_at, posts_count=counts.get(gs.id, 0),
-            meta=gs.meta or {}, last_job=JobBrief.model_validate(job) if job else None, created_at=s.created_at))
+            meta=gs.meta or {}, last_job=JobBrief.model_validate(job) if job else None,
+            last_analysis=JobBrief.model_validate(analysis_job) if analysis_job else None,
+            median_views=gs.median_views, analyzed_count=analyzed.get(gs.id, 0), created_at=s.created_at))
     return out
 
 
@@ -192,6 +232,21 @@ async def source_posts(source_id: int, limit: int = 20, tenant: Tenant = Depends
                        session: AsyncSession = Depends(get_session)):
     """Последние посты источника — для проверки сбора. Полноценная лента с фильтрами — EPIC 5."""
     source: Source = await tenant.get(session, Source, source_id)
-    stmt = (select(GlobalPost).where(GlobalPost.global_source_id == source.global_source_id)
+    stmt = (select(GlobalPost, PostAnalysis, PostEmbedding.post_id.is_not(None))
+            .outerjoin(PostAnalysis, and_(PostAnalysis.post_id == GlobalPost.id,
+                                          PostAnalysis.organization_id == tenant.org_id))
+            .outerjoin(PostEmbedding, PostEmbedding.post_id == GlobalPost.id)
+            .where(GlobalPost.global_source_id == source.global_source_id)
             .order_by(GlobalPost.published_at.desc().nulls_last(), GlobalPost.id.desc()).limit(min(limit, 100)))
-    return list((await session.execute(stmt)).scalars())
+    return [post_out(p, a, bool(e)) for p, a, e in (await session.execute(stmt)).all()]
+
+
+@router.post("/{source_id}/analyze", response_model=SourceOut, status_code=status.HTTP_202_ACCEPTED)
+async def analyze_source(source_id: int, request: Request, tenant: Tenant = Depends(require_role(Role.member)),
+                         session: AsyncSession = Depends(get_session)):
+    """Метрики, дубли, разметка и эмбеддинги без нового сбора — например, после правки таксономии."""
+    source: Source = await tenant.get(session, Source, source_id)
+    if await pipeline.start(session, getattr(request.app.state, "arq", None), tenant.org_id, source.id,
+                            tenant.user.id) is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Анализ уже идёт")
+    return (await _out(session, tenant.org_id, [source]))[0]

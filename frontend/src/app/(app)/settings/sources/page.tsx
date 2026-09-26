@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronDown, ChevronRight, Globe, Loader2, RefreshCw, Rss, Send, Trash2 } from "lucide-react";
+import { Camera, ChevronDown, ChevronRight, Globe, Loader2, RefreshCw, Rss, Send, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ComingSoon";
 import { api, type Post, type Source, type SourceKind, type SourceRole, type SourceStatus } from "@/lib/api";
@@ -15,7 +15,7 @@ const STATUS: Record<SourceStatus, { label: string; cls: string }> = {
   error: { label: "Ошибка", cls: "text-bad" },
   unavailable: { label: "Недоступен", cls: "text-warn" },
 };
-const ACTIVE = new Set(["queued", "running", "collecting"]);
+const ACTIVE = new Set(["queued", "running", "collecting", "analyzing"]);
 
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }) : "—");
 const fmtNum = (n: number | null) => (n === null ? "—" : n.toLocaleString("ru-RU"));
@@ -35,6 +35,27 @@ function jobNote(s: Source): { text: string; cls: string } | null {
   return { text: [parts.join(", "), r.message].filter(Boolean).join(". "), cls: "text-muted" };
 }
 
+function analysisNote(s: Source): { text: string; cls: string } | null {
+  const j = s.last_analysis;
+  if (!j) return null;
+  if (ACTIVE.has(j.status)) {
+    return { text: j.status === "queued" ? "Анализ в очереди…" : `Анализируем… ${j.progress}%`, cls: "text-muted" };
+  }
+  if (j.status === "failed") return { text: `Анализ не удался: ${j.error ?? ""}`, cls: "text-bad" };
+  const r = j.result as {
+    classified?: number; no_text?: number; duplicates?: number; message?: string; classify_stopped?: string;
+    embed_error?: string;
+  } | null;
+  if (!r) return null;
+  const warn = r.message ?? r.classify_stopped ?? r.embed_error;
+  const parts = [`размечено: ${s.analyzed_count} из ${s.posts_count}`];
+  if (r.duplicates) parts.push(`дублей: ${r.duplicates}`);
+  return { text: [parts.join(", "), warn].filter(Boolean).join(". "), cls: warn ? "text-warn" : "text-muted" };
+}
+
+const pct = (n: number | null) => (n === null ? null : `${n.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}%`);
+const label = (v: string | null) => (v ? v.replaceAll("_", " ") : null);
+
 function Posts({ sourceId }: { sourceId: number }) {
   const [posts, setPosts] = useState<Post[] | null>(null);
   useEffect(() => {
@@ -51,10 +72,27 @@ function Posts({ sourceId }: { sourceId: number }) {
             <span>{p.media_type}</span>
             {p.views !== null && <span>просмотры {fmtNum(p.views)}</span>}
             {p.likes !== null && <span>реакции {fmtNum(p.likes)}</span>}
+            {p.er !== null && <span>ER {pct(p.er)}</span>}
+            {p.overperformance !== null && (
+              <span className={p.overperformance >= 1.5 ? "font-semibold text-good" : ""}
+                    title="Во сколько раз лучше медианы источника">×{p.overperformance.toLocaleString("ru-RU", { maximumFractionDigits: 1 })}</span>
+            )}
+            {p.duplicate_of_id !== null && <span className="text-warn">дубль</span>}
             {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="text-accent hover:underline">открыть</a>}
           </div>
           {p.title && <p className="font-medium">{p.title}</p>}
           <p className="line-clamp-3 whitespace-pre-line">{p.text || "(без текста)"}</p>
+          {p.analysis && !p.analysis.error && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+              {[p.analysis.topic, label(p.analysis.content_type), label(p.analysis.funnel_stage),
+                p.analysis.hook_type !== "нет" ? `хук: ${label(p.analysis.hook_type)}` : null,
+                p.analysis.cta_type !== "нет" ? `CTA: ${label(p.analysis.cta_type)}` : null,
+                p.analysis.target_role].filter(Boolean).map((t, i) => (
+                <span key={i} className={`rounded-md px-1.5 py-0.5 ${i === 0 ? "bg-accent-soft text-accent" : "bg-bg text-muted"}`}>{t}</span>
+              ))}
+            </div>
+          )}
+          {p.analysis?.summary && <p className="mt-1 text-xs text-muted">{p.analysis.summary}</p>}
         </li>
       ))}
     </ul>
@@ -74,7 +112,7 @@ export default function SourcesPage() {
   }, []);
   useEffect(load, [load]);
 
-  const syncing = sources?.some((s) => s.last_job && ACTIVE.has(s.last_job.status)) ?? false;
+  const syncing = sources?.some((s) => [s.last_job, s.last_analysis].some((j) => j && ACTIVE.has(j.status))) ?? false;
   useEffect(() => {
     if (!syncing) return;
     const t = setInterval(load, 3000);
@@ -150,6 +188,8 @@ export default function SourcesPage() {
             const Icon = KIND_ICON[s.kind];
             const active = !!s.last_job && ACTIVE.has(s.last_job.status);
             const note = jobNote(s);
+            const aNote = analysisNote(s);
+            const analyzing = !!s.last_analysis && ACTIVE.has(s.last_analysis.status);
             return (
               <div key={s.id} className="card">
                 <div className="flex flex-wrap items-start gap-4">
@@ -164,6 +204,7 @@ export default function SourcesPage() {
                       <span className={STATUS[s.status].cls}>{STATUS[s.status].label}</span>
                       {(s.kind === "telegram" || s.kind === "instagram") && <span>Подписчики: {fmtNum(s.followers)}</span>}
                       <span>Постов: {fmtNum(s.posts_count)}</span>
+                      {s.median_views !== null && <span>Медиана просмотров: {fmtNum(Math.round(s.median_views))}</span>}
                       <span className="text-muted">Обновлён: {fmtDate(s.last_synced_at)}</span>
                     </div>
                     {s.last_error && s.status !== "ok" && <p className="mt-1 text-sm text-bad">{s.last_error}</p>}
@@ -173,12 +214,24 @@ export default function SourcesPage() {
                         {note.text}
                       </p>
                     )}
+                    {aNote && s.status === "ok" && (
+                      <p className={`mt-1 flex items-center gap-1 text-sm ${aNote.cls}`}>
+                        {analyzing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                        {aNote.text}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     {canManage && (
                       <button className="btn-ghost" disabled={active} title="Собрать сейчас"
                               onClick={() => act(() => api(`/sources/${s.id}/sync`, { method: "POST" }))}>
                         <RefreshCw className={`size-4 ${active ? "animate-spin" : ""}`} />
+                      </button>
+                    )}
+                    {canManage && s.posts_count > 0 && (
+                      <button className="btn-ghost" disabled={analyzing} title="Проанализировать: метрики, разметка, эмбеддинги"
+                              onClick={() => act(() => api(`/sources/${s.id}/analyze`, { method: "POST" }))}>
+                        <Sparkles className="size-4" />
                       </button>
                     )}
                     {canManage && (
