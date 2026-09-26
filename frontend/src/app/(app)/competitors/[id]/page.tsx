@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { PostList } from "@/components/PostList";
-import { api, type Competitor, type ContentStats, type Post, type Share } from "@/lib/api";
+import { WebsiteChanges } from "@/components/WebsiteChanges";
+import { api, type Competitor, type ContentStats, type Post, type Share, type WebsiteChange } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { fmtDate, fmtNum, KIND_ICON, KIND_LABELS, label, media, pct } from "@/lib/format";
 
@@ -128,6 +129,41 @@ function Analytics({ st }: { st: ContentStats }) {
   );
 }
 
+function SiteChanges({ c, canManage }: { c: Competitor; canManage: boolean }) {
+  const [changes, setChanges] = useState<WebsiteChange[] | null>(null);
+  const [tracked, setTracked] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    api<WebsiteChange[]>(`/websites/changes?competitor_id=${c.id}&days=365`).then(setChanges).catch(() => setChanges([]));
+    api<{ competitor_id: number | null }[]>("/websites").then((ws) => setTracked(ws.some((w) => w.competitor_id === c.id)))
+      .catch(() => setTracked(null));
+  }, [c.id]);
+  useEffect(load, [load]);
+
+  async function track() {
+    setError(null);
+    try {
+      await api("/websites", { method: "POST", json: { url: c.website, competitor_id: c.id, name: c.name } });
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ошибка");
+    }
+  }
+
+  return (
+    <div className="card mt-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="label">Изменения сайта</p>
+        {canManage && tracked === false && c.website && <button className="btn-ghost" onClick={track}>Отслеживать сайт</button>}
+      </div>
+      {error && <p className="mb-2 text-sm text-bad">{error}</p>}
+      {tracked === false ? (
+        <p className="text-sm text-muted">{c.website ? "Сайт конкурента пока не отслеживается." : "У конкурента не указан сайт."}</p>
+      ) : changes === null ? <p className="text-sm text-muted">Загрузка…</p> : <WebsiteChanges changes={changes} showSite={false} />}
+    </div>
+  );
+}
+
 function Timeline({ st }: { st: ContentStats }) {
   const max = Math.max(1, ...st.weekly.map((w) => w.posts));
   return (
@@ -144,7 +180,6 @@ function Timeline({ st }: { st: ContentStats }) {
       <div className="mt-1 flex gap-2 text-[10px] text-muted">
         {st.weekly.map((w) => <span key={w.week} className="flex-1 text-center">{w.week.slice(5)}</span>)}
       </div>
-      <p className="mt-3 text-xs text-muted">Изменения сайта конкурента появятся здесь вместе с вкладкой «Сайты» (EPIC 7).</p>
     </div>
   );
 }
@@ -280,7 +315,7 @@ export default function CompetitorPage() {
       {tab === "profile" && <Profile c={c} canManage={canManage}
                                      onRefresh={() => act(() => api(`/competitors/${c.id}/profile`, { method: "POST" }))} />}
       {tab === "analytics" && <Analytics st={c.stats} />}
-      {tab === "timeline" && <Timeline st={c.stats} />}
+      {tab === "timeline" && <><Timeline st={c.stats} /><SiteChanges c={c} canManage={canManage} /></>}
       {tab === "content" && <Content id={c.id} />}
     </>
   );

@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     classify_max_posts_per_job: int = 300  # разметка — пачками по 10, остальное доделает следующий sync
     embed_max_posts_per_job: int = 1000
     semantic_dup_distance: float = 0.05     # косинусное расстояние: ≤ 0.05 — один и тот же текст в пересказе
+    website_crawl_days: int = 7         # как часто обходить отслеживаемые сайты
+    website_text_max_chars: int = 200_000
     apify_token: str = ""                 # Instagram через Apify; без ключа такие источники «недоступны»
     apify_timeout_sec: float = 300
     vk_service_token: str = ""            # сервисный ключ приложения VK; без него сообщества VK «недоступны»

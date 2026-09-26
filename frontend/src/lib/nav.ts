@@ -56,6 +56,7 @@ export const METRIC_LABELS: Record<string, string> = {
   competitors: "Конкуренты",
   sources: "Источники",
   websites: "Сайты",
+  website_pages: "Страниц на сайт",
   audits_month: "Аудиты в месяц",
   generations_month: "Генерации в месяц",
   ai_cost_usd_month: "Расход AI в месяц, $",

@@ -57,10 +57,12 @@ backend/app/
                  (AI-разбор поста, кэш post_insights)
   topics/        stats.py (доли, gap, тренд — код), cluster.py (под-темы HDBSCAN, задача cluster_topics),
                  service.py (карточка темы, AI-объяснение gap), router.py (/topics, /gaps, /detail, /cluster)
+  websites/      discover.py (robots, sitemap, типы страниц), diff.py (значимые строки, эвристика категории),
+                 crawl.py (задача crawl_website), router.py (/websites, /pages, /changes, /crawl)
   sources/       service.py (resolve/global_source/start_sync — общий для /sources и конкурентов), sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
                  analyze_source → profile_competitor)
-backend/migrations/versions/0001_saas_core.py … 0006_topics.py
+backend/migrations/versions/0001_saas_core.py … 0007_websites.py
 frontend/src/
   app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы>
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
@@ -127,4 +129,6 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
   медиане, похожие посты), AI-разбор с кэшем, 151 тест
 - ✅ EPIC 6 — Темы + Content Gaps: дерево «тема таксономии → под-темы (HDBSCAN)», доли, gap, тренд, насыщенность,
   карточка темы, AI-объяснение gap с идеями, блок gaps на «Обзоре», 162 теста
-- 🔲 Далее: EPIC 7 — Сайты (см. `ROADMAP.md`)
+- ✅ EPIC 7 — Сайты: обход с robots.txt и sitemap, снимки страниц, «было/стало» без шума, смысл изменения от модели,
+  новые и удалённые страницы, лимит страниц по тарифу, таймлайн конкурента, 182 теста
+- 🔲 Далее: EPIC 8 — Аудит контента (см. `ROADMAP.md`)

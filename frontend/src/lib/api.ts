@@ -343,3 +343,54 @@ export type TopicDetail = Omit<TopicRow, "subtopics"> & {
   own_posts: Post[];
   insight: GapInsight | null;
 };
+export type Website = {
+  id: number;
+  url: string;
+  name: string | null;
+  competitor_id: number | null;
+  competitor_name: string | null;
+  status: string;
+  last_error: string | null;
+  last_crawled_at: string | null;
+  pages_tracked: number;
+  pages_total: number;
+  page_limit: number;
+  changes_30d: number;
+  last_job: (Job & { finished_at: string | null }) | null;
+  created_at: string;
+};
+export type WebsitePage = {
+  id: number;
+  url: string;
+  kind: string;
+  title: string | null;
+  tracked: boolean;
+  status_code: number | null;
+  last_checked_at: string | null;
+  last_changed_at: string | null;
+};
+export type WebsiteChange = {
+  id: number;
+  website_id: number;
+  website: string;
+  competitor_id: number | null;
+  competitor_name: string | null;
+  page_id: number;
+  page_url: string;
+  page_kind: string;
+  page_title: string | null;
+  kind: "changed" | "new_page" | "removed_page";
+  detected_at: string;
+  summary: string | null;
+  category: string | null;
+  importance: "high" | "medium" | "low" | null;
+  ai: boolean;
+  added_count: number;
+  removed_count: number;
+};
+export type WebsiteChangeDetail = WebsiteChange & {
+  added: string[];
+  removed: string[];
+  before_text: string | null;
+  after_text: string | null;
+};

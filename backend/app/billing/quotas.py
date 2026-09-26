@@ -9,6 +9,7 @@ from app.models import Subscription, UsageEvent
 
 METRIC_LABELS = {
     "members": "участники", "competitors": "конкуренты", "sources": "источники", "websites": "сайты",
+    "website_pages": "страниц на сайт",
     "audits_month": "аудиты в месяц", "generations_month": "генерации в месяц",
     "ai_cost_usd_month": "расход AI в месяц, $",
 }
