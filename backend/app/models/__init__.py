@@ -6,10 +6,12 @@ from app.models.sources import GlobalPost, GlobalSource, PostMetric, Source, Sou
 from app.models.system import FINAL_STATUSES, Job, JobStatus, LLMRequest
 from app.models.tenancy import ROLE_RANK, Invitation, Membership, Organization, Role, User
 from app.models.topics import TopicCluster, TopicClusterPost, TopicInsight
+from app.models.websites import PageSnapshot, Website, WebsiteChange, WebsitePage
 
 __all__ = [
     "FINAL_STATUSES", "ROLE_RANK", "Competitor", "GlobalPost", "GlobalSource", "Invitation", "Job", "JobStatus",
-    "LLMRequest", "Membership", "Organization", "Plan", "PostAnalysis", "PostEmbedding", "PostInsight", "PostMetric",
-    "Role", "Source", "SourceKind", "SourceRole", "SourceStatus", "Subscription", "Taxonomy", "TopicCluster",
-    "TopicClusterPost", "TopicInsight", "UsageEvent", "User",
+    "LLMRequest", "Membership", "Organization", "PageSnapshot", "Plan", "PostAnalysis", "PostEmbedding", "PostInsight",
+    "PostMetric", "Role", "Source", "SourceKind", "SourceRole", "SourceStatus", "Subscription", "Taxonomy",
+    "TopicCluster", "TopicClusterPost", "TopicInsight", "UsageEvent", "User", "Website", "WebsiteChange",
+    "WebsitePage",
 ]

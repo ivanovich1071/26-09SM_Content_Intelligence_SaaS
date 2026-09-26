@@ -11,6 +11,7 @@ from app.jobs.service import set_status
 from app.models import Job, JobStatus
 from app.sources import sync
 from app.topics import cluster
+from app.websites import crawl
 
 log = logging.getLogger("sm.worker")
 
@@ -77,3 +78,15 @@ async def schedule_clustering(ctx: dict) -> None:
         created = await cluster.schedule_due(session, ctx.get("redis"))
     if created:
         log.info("Запланирован пересчёт под-тем: %s", created)
+
+
+async def crawl_website(ctx: dict, job_id: int) -> None:
+    await run_job(job_id, crawl.handle_crawl_website)
+
+
+async def schedule_crawls(ctx: dict) -> None:
+    """Cron: сайты, обход которых старше website_crawl_days."""
+    async with SessionLocal() as session:
+        created = await crawl.schedule_due(session, ctx.get("redis"))
+    if created:
+        log.info("Запланировано обходов сайтов: %s", created)
