@@ -21,7 +21,7 @@ async def test_foreign_org_header_is_404(client):
     for url in ("/api/v1/organizations/current", "/api/v1/organizations/current/members", "/api/v1/jobs",
                 "/api/v1/billing/usage", "/api/v1/sources", "/api/v1/taxonomy", "/api/v1/market/overview",
                 "/api/v1/competitors", "/api/v1/posts", "/api/v1/topics", "/api/v1/topics/gaps",
-                "/api/v1/websites", "/api/v1/websites/changes"):
+                "/api/v1/websites", "/api/v1/websites/changes", "/api/v1/audits"):
         assert (await client.get(url, headers=headers)).status_code == 404, url
 
 

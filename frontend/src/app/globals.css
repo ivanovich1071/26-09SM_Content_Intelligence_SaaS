@@ -39,3 +39,11 @@ body {
 .label {
   @apply mb-1 block text-xs font-semibold text-muted uppercase tracking-wide;
 }
+
+/* Отчёт аудита → «Сохранить как PDF» в диалоге печати */
+@media print {
+  aside, .no-print { display: none !important; }
+  main { padding: 0 !important; }
+  body { background: #fff; }
+  .card { break-inside: avoid; }
+}

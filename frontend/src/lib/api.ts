@@ -394,3 +394,78 @@ export type WebsiteChangeDetail = WebsiteChange & {
   before_text: string | null;
   after_text: string | null;
 };
+
+export type AuditStatus = "queued" | "running" | "completed" | "failed";
+export type AuditStage = "queued" | "sources" | "collect" | "classify" | "metrics" | "audit" | "done";
+export type AuditBrief = {
+  id: number;
+  job_id: number | null;
+  company: string;
+  website: string | null;
+  score: number | null;
+  status: AuditStatus;
+  stage: AuditStage;
+  progress: number;
+  error: string | null;
+  created_at: string;
+  finished_at: string | null;
+};
+export type AuditEvidence = { fact: string; post_id?: number; url?: string | null; date?: string | null; source?: string };
+export type AuditItem = {
+  criterion: string;
+  name: string;
+  weight: number;
+  score: number | null;
+  explanation: string;
+  evidence: AuditEvidence[];
+  recommendations: string[];
+  ai: boolean;
+  locked: boolean;
+};
+export type AuditChannel = {
+  kind: SourceKind;
+  url: string;
+  title: string | null;
+  followers: number | null;
+  origin: "input" | "own" | "site";
+  error: string | null;
+  message: string | null;
+  posts: number;
+  analyzed: number;
+  posts_per_week: number;
+  median_views: number | null;
+  median_er: number | null;
+  days_since_last_post: number | null;
+};
+export type BenchmarkRow = { key: string; label: string; own: number | null; market: number | null; top: number | null };
+export type AuditResult = {
+  days?: number;
+  ai?: boolean;
+  notes?: string[];
+  summary?: string | null;
+  strengths?: string[];
+  problems?: { title: string; detail: string; criterion: string | null }[];
+  problems_hidden?: number;
+  site?: {
+    url: string; title?: string | null; description?: string | null; error: string | null; forms: number;
+    contacts: number; social_links: string[]; pages: { url: string; kind: string; title: string | null }[];
+  } | null;
+  channels?: AuditChannel[];
+  own?: { posts: number; analyzed: number; posts_per_week: number; median_er: number | null;
+          topics: { value: string; share: number }[]; funnel: { value: string; share: number }[] };
+  benchmark?: { enough: boolean | null; message?: string | null; posts: number | null; min_posts: number | null;
+                sources?: number; rows?: BenchmarkRow[] };
+  gaps?: { topic: string; share_market: number; share_own: number; gap: number; market_posts: number }[];
+  gaps_hidden?: number;
+  top_posts?: { post_id: number; url: string | null; date: string | null; source: string; text: string;
+                er: number | null; overperformance: number | null }[];
+};
+export type Audit = AuditBrief & {
+  inputs: string[];
+  use_own_sources: boolean;
+  model: string | null;
+  result: AuditResult;
+  items: AuditItem[];
+  locked: boolean;
+  token: string | null;
+};

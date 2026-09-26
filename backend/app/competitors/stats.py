@@ -14,7 +14,7 @@ from app.models import GlobalPost, GlobalSource, PostAnalysis, Source
 WEEKS = 12
 
 
-def _shares(values: list[str | None], top: int = 6) -> list[dict]:
+def shares(values: list[str | None], top: int = 6) -> list[dict]:
     values = [v for v in values if v]
     if not values:
         return []
@@ -22,7 +22,7 @@ def _shares(values: list[str | None], top: int = 6) -> list[dict]:
             for v, n in Counter(values).most_common(top)]
 
 
-def _pct(flags: list[bool | None]) -> float | None:
+def flag_pct(flags: list[bool | None]) -> float | None:
     flags = [f for f in flags if f is not None]
     return round(100 * sum(flags) / len(flags), 1) if flags else None
 
@@ -40,7 +40,11 @@ async def rows_for(session: AsyncSession, org_id: int, source_ids: list[int], da
 
 
 async def compute(session: AsyncSession, org_id: int, source_ids: list[int], days: int = 90) -> dict:
-    rows = await rows_for(session, org_id, source_ids, days) if source_ids else []
+    return summarize(await rows_for(session, org_id, source_ids, days) if source_ids else [], days)
+
+
+def summarize(rows, days: int) -> dict:
+    """rows: объекты с .GlobalPost и .PostAnalysis (может быть None), отсортированы от новых к старым."""
     posts = [r.GlobalPost for r in rows]
     labels = [r.PostAnalysis for r in rows if r.PostAnalysis and not r.PostAnalysis.error]
     views = [p.views for p in posts if p.views]
@@ -62,18 +66,19 @@ async def compute(session: AsyncSession, org_id: int, source_ids: list[int], day
         "posts_per_week": round(len(posts) / (days / 7), 1),
         "median_views": median(views) if views else None,
         "median_er": round(median(ers), 2) if ers else None,
-        "formats": _shares([p.media_type for p in posts]),
-        "topics": _shares([a.topic for a in labels], top=8),
-        "content_types": _shares([a.content_type for a in labels]),
-        "funnel": _shares([a.funnel_stage for a in labels]),
-        "hooks": _shares([a.hook_type for a in labels if a.hook_type != "нет"]),
-        "ctas": _shares([a.cta_type for a in labels if a.cta_type != "нет"]),
-        "tone": _shares([a.tone for a in labels], top=3),
-        "cta_share": _pct([a.cta_type != "нет" for a in labels]),
-        "case_share": _pct([a.has_case for a in labels]),
-        "numbers_share": _pct([a.has_numbers for a in labels]),
-        "offer_share": _pct([a.has_offer for a in labels]),
-        "lead_magnet_share": _pct([a.has_lead_magnet for a in labels]),
+        "formats": shares([p.media_type for p in posts]),
+        "topics": shares([a.topic for a in labels], top=8),
+        "content_types": shares([a.content_type for a in labels]),
+        "funnel": shares([a.funnel_stage for a in labels]),
+        "hooks": shares([a.hook_type for a in labels if a.hook_type != "нет"]),
+        "ctas": shares([a.cta_type for a in labels if a.cta_type != "нет"]),
+        "tone": shares([a.tone for a in labels], top=3),
+        "cta_share": flag_pct([a.cta_type != "нет" for a in labels]),
+        "case_share": flag_pct([a.has_case for a in labels]),
+        "numbers_share": flag_pct([a.has_numbers for a in labels]),
+        "offer_share": flag_pct([a.has_offer for a in labels]),
+        "lead_magnet_share": flag_pct([a.has_lead_magnet for a in labels]),
+        "hook_share": flag_pct([a.hook_type != "нет" for a in labels]),
         "weekly": weekly,
         "top_post_ids": [r.GlobalPost.id for r in top],
     }

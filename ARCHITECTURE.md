@@ -127,7 +127,7 @@ published_at, media_type, metrics{views,likes,comments,shares}, content_hash, ra
 | Sources | `global_sources`, `sources`, `competitors`, `social_accounts`, `websites`, `website_pages`, `page_snapshots`, `website_changes` |
 | Content | `global_posts`, `post_metrics`, `post_analysis`, `post_embeddings(vector)` |
 | Topics | `taxonomies`, `topics`, `topic_clusters`, `trends` |
-| Audit | `content_audits`, `audit_items`, `audit_recommendations`, `content_opportunities` |
+| Audit | `content_audits` (результат: метрики, benchmark, gaps, проблемы — JSON), `audit_items` (критерий: балл, пояснение, evidence, советы); `content_opportunities` — EPIC 9 |
 | Brand | `brand_profiles`, `brand_voice` |
 | Factory | `content_projects`, `content_versions`, `content_generations` |
 | Digest | `digests`, `digest_schedules` |

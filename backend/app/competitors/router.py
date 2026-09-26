@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.analysis import dedupe
 from app.billing import quotas
 from app.competitors import profile, stats
-from app.connectors import InvalidSource, social_kind
+from app.connectors import InvalidSource, missing_key, social_kind
 from app.connectors.base import normalize_web_url
 from app.connectors.http import Fetcher, FetchError
 from app.connectors.website import WebsiteConnector
@@ -21,8 +21,6 @@ from app.sources import service
 from app.sources.router import JobBrief, PostOut, SourceOut, post_out, sources_out
 
 router = APIRouter(prefix="/competitors", tags=["competitors"])
-
-KEYS_NEEDED = {"instagram": "apify_token", "vk": "vk_service_token"}
 
 
 class CompetitorIn(BaseModel):
@@ -149,9 +147,7 @@ async def discover(body: DiscoverIn, tenant: Tenant = Depends(require_role(Role.
     links = []
     for link in prof.meta.get("social_links", []):
         kind = social_kind(link)
-        need = KEYS_NEEDED.get(kind or "")
-        links.append({"url": link, "kind": kind, "supported": kind is not None,
-                      "needs_key": bool(need and not getattr(settings, need))})
+        links.append({"url": link, "kind": kind, "supported": kind is not None, "needs_key": missing_key(kind)})
     return {"website": url, "title": prof.title, "description": prof.description,
             "feed_url": prof.meta.get("feed_url"), "social_links": links}
 

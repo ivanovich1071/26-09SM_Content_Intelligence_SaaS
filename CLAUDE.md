@@ -59,12 +59,15 @@ backend/app/
                  service.py (карточка темы, AI-объяснение gap), router.py (/topics, /gaps, /detail, /cluster)
   websites/      discover.py (robots, sitemap, типы страниц), diff.py (значимые строки, эвристика категории),
                  crawl.py (задача crawl_website), router.py (/websites, /pages, /changes, /crawl)
+  audits/        criteria.py (критерии, веса, балл, эвристики), collect.py (каналы, сайт, сбор), benchmark.py
+                 (метрики, рынок, gaps — код), pipeline.py (задача run_audit, Content Auditor), public.py (лимиты,
+                 капча, частичный отчёт), router.py (/audits, /audits/claim, /public/audits)
   sources/       service.py (resolve/global_source/start_sync — общий для /sources и конкурентов), sync.py (sync_global_source, handle_sync_source, schedule_due), /sources CRUD + sync + posts
   workers/       settings.py (arq WorkerSettings + cron schedule_syncs), tasks.py (run_job, ping, sync_source →
                  analyze_source → profile_competitor)
-backend/migrations/versions/0001_saas_core.py … 0007_websites.py
+backend/migrations/versions/0001_saas_core.py … 0008_audits.py
 frontend/src/
-  app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы>
+  app/(auth)/login|register · app/(app)/<вкладки> · app/(app)/settings/<разделы> · app/free-audit (публичный аудит)
   lib/api.ts (fetch + refresh + X-Organization-Id), lib/auth.tsx (контекст), lib/nav.ts (меню и описания вкладок)
   components/ComingSoon.tsx (заглушки ещё не реализованных вкладок), PostList.tsx (посты с метриками и разметкой)
   lib/format.ts (иконки и названия площадок, форматирование чисел и дат)
@@ -131,4 +134,7 @@ API: http://localhost:8000/docs · Web: http://localhost:3000 (проксиру�
   карточка темы, AI-объяснение gap с идеями, блок gaps на «Обзоре», 162 теста
 - ✅ EPIC 7 — Сайты: обход с robots.txt и sitemap, снимки страниц, «было/стало» без шума, смысл изменения от модели,
   новые и удалённые страницы, лимит страниц по тарифу, таймлайн конкурента, 182 теста
-- 🔲 Далее: EPIC 8 — Аудит контента (см. `ROADMAP.md`)
+- ✅ EPIC 8 — Аудит контента: 6 критериев (балл — код, объяснения и evidence со ссылками на посты — модель),
+  benchmark с порогом данных, gaps, прогресс по этапам, PDF через печать, публичный аудит без регистрации с
+  лимитами и переносом в аккаунт, 197 тестов
+- 🔲 Далее: EPIC 9 — Content Strategy (см. `ROADMAP.md`)

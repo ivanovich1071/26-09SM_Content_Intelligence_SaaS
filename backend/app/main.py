@@ -11,6 +11,8 @@ from sqlalchemy import text
 
 from app.analysis.router import market_router
 from app.analysis.router import router as taxonomy_router
+from app.audits.router import public_router as public_audits_router
+from app.audits.router import router as audits_router
 from app.auth.router import router as auth_router
 from app.billing.plans import sync_plans
 from app.billing.router import router as billing_router
@@ -50,7 +52,7 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_cr
 api = APIRouter(prefix="/api/v1")
 for r in (auth_router, org_router, billing_router, jobs_router, sources_router, taxonomy_router,
           market_router, competitors_router, posts_router,
-          topics_router, websites_router):
+          topics_router, websites_router, audits_router, public_audits_router):
     api.include_router(r)
 app.include_router(api)
 

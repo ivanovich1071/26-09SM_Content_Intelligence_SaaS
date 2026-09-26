@@ -11,7 +11,7 @@
 | `post_analysis/` | ✅ AI-разбор поста (хук, боль, аргументация, почему отклик, что взять / не копировать) | 5 |
 | `topic/` | ✅ naming.md — названия под-тем; gap.md — объяснение Content Gap с идеями | 6 |
 | `website/` | ✅ change.md — смысл, категория и важность изменения страницы | 7 |
-| `audit/` | Content Auditor (перенос из VM_SM `app/audit/content_audit.py`) | 8 |
+| `audit/` | ✅ Content Auditor: 6 критериев, evidence со ссылками на посты, проблемы (перенос из VM_SM `app/audit/content_audit.py`) | 8 |
 | `strategy/` | Content Strategist | 9 |
 | `writer/`, `editor/`, `qa/` | Контент Завод (перенос форматов из VM_SM `app/factory.py`) | 10 |
 | `digest/` | Digest Generator | 11 |

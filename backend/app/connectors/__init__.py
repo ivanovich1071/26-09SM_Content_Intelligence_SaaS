@@ -8,6 +8,7 @@ from app.connectors.telegram import TelegramConnector
 from app.connectors.vk import VKConnector
 from app.connectors.website import WebsiteConnector
 from app.connectors.youtube import YouTubeConnector
+from app.core.config import settings
 
 CONNECTORS: dict[str, SourceConnector] = {
     c.kind: c for c in (TelegramConnector(), WebsiteConnector(), RSSConnector(), InstagramConnector(),
@@ -19,6 +20,14 @@ FEED_HINT = re.compile(r"(/feed|/rss|/atom|\.rss|\.xml)(/|$|\?)", re.I)
 
 def get_connector(kind: str) -> SourceConnector:
     return CONNECTORS[kind]
+
+
+KEYS_NEEDED = {"instagram": "apify_token", "vk": "vk_service_token"}  # тип → настройка с ключом
+
+
+def missing_key(kind: str | None) -> bool:
+    need = KEYS_NEEDED.get(kind or "")
+    return bool(need and not getattr(settings, need))
 
 
 SOCIAL_DOMAINS = {
@@ -48,4 +57,5 @@ def detect_kind(raw: str) -> str:
     return "website"
 
 
-__all__ = ["CONNECTORS", "InvalidSource", "SourceConnector", "detect_kind", "get_connector", "social_kind"]
+__all__ = ["CONNECTORS", "KEYS_NEEDED", "InvalidSource", "SourceConnector", "detect_kind", "get_connector",
+           "missing_key", "social_kind"]

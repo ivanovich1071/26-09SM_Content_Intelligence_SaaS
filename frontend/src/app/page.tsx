@@ -21,7 +21,8 @@ export default function Landing() {
         ))}
       </ol>
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/register" className="btn">Бесплатный аудит контента</Link>
+        <Link href="/free-audit" className="btn">Бесплатный аудит контента</Link>
+        <Link href="/register" className="btn-ghost">Регистрация</Link>
         <Link href="/login" className="btn-ghost">Войти</Link>
       </div>
     </main>
