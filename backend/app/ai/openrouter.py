@@ -91,9 +91,11 @@ class OpenRouterProvider:
             "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
             "usage": {"include": True},
-            # Без этого flash-модели тратят max_tokens на скрытое «размышление» и JSON обрезается (проверено в VM_SM)
-            "reasoning": {"enabled": False},
         }
+        # Без этого flash-модели тратят max_tokens на скрытое «размышление» и JSON обрезается (проверено в VM_SM).
+        # Моделям с обязательным reasoning (например qwen3.8-max) параметр не отправляем — они отвечают 400.
+        if "flash" in model.lower():
+            body["reasoning"] = {"enabled": False}
         headers = {"Authorization": f"Bearer {self.api_key}", "X-Title": settings.app_name}
         started = time.monotonic()
         usage: dict = {}
