@@ -181,7 +181,8 @@ async def test_rss_source(client, web):
 
 
 async def test_validation_duplicate_and_quota(client):
-    acc = await register(client)  # Free: 1 источник
+    acc = await register(client)
+    await set_plan(acc.org_id, "free")  # Free: 1 источник
     assert (await acc.post("/api/v1/sources", json={"url": "https://t.me/+secret"})).status_code == 422
     assert (await acc.post("/api/v1/sources", json={"url": "про маркетинг", "kind": "telegram"})).status_code == 422
     h = handle()

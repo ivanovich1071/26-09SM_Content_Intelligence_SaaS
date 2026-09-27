@@ -10,7 +10,7 @@ from app.ai.router import AIRouter
 from app.billing import usage
 from app.billing.quotas import QuotaExceeded
 from app.models import LLMRequest, UsageEvent
-from tests.conftest import register
+from tests.conftest import register, set_plan
 
 
 class FakeProvider:
@@ -76,7 +76,8 @@ async def test_non_retryable_error_stops(client, session):
 
 
 async def test_quota_blocks_before_call(client, session):
-    acc = await register(client)  # free: ai_cost_usd_month = 0.5
+    acc = await register(client)
+    await set_plan(acc.org_id, "free")  # free: ai_cost_usd_month = 0.5
     await usage.record(session, acc.org_id, "ai_cost_usd", "earlier", 0.5)
     provider = FakeProvider([{"ok": 1}])
     with pytest.raises(QuotaExceeded):

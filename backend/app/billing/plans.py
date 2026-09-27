@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Plan
 
-DEFAULT_PLAN = "free"
+# Тестовый режим: биллинга и оплат ещё нет — каждая компания по умолчанию на «Стартере».
+# При вводе биллинга вернуть "free" и продавать starter через подписки.
+DEFAULT_PLAN = "starter"
 
 PLANS: dict[str, dict] = {
     "free": {"name": "Free", "price": 0, "limits": {

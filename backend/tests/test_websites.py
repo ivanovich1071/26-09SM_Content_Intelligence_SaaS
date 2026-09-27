@@ -190,7 +190,8 @@ async def test_model_failure_falls_back_to_heuristics(client, site):
 
 
 async def test_page_limit_by_plan(client, site):
-    acc = await register(client)  # Free: 10 страниц
+    acc = await register(client)
+    await set_plan(acc.org_id, "free")  # Free: 10 страниц
     for i in range(15):
         site.pages[f"/blog/post-{i}"] = page(f"Пост {i}", "<p>текст</p>")
         site.sitemap_extra.append(f"/blog/post-{i}")

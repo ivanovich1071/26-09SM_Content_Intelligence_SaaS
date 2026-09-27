@@ -11,6 +11,7 @@ async def _join(client, owner: Account, role: str) -> Account:
 
 async def test_free_plan_limits_members(client):
     owner = await register(client)
+    await set_plan(owner.org_id, "free")  # Free: 1 участник
     r = await owner.post("/api/v1/organizations/current/invitations", json={"email": "x@example.com"})
     assert r.status_code == 402
     assert r.json()["detail"]["metric"] == "members"

@@ -1,14 +1,14 @@
 from tests.conftest import register
 
 
-async def test_register_creates_owner_org_and_free_plan(client):
+async def test_register_creates_owner_org_and_default_plan(client):
     acc = await register(client, org="Кофейня «Утро»")
     me = (await acc.get("/api/v1/auth/me")).json()
     assert me["email"] == acc.email
     assert me["organizations"][0]["role"] == "owner"
     assert me["organizations"][0]["name"] == "Кофейня «Утро»"
     usage = (await acc.get("/api/v1/billing/usage")).json()
-    assert usage["plan"] == "free"
+    assert usage["plan"] == "starter"
     assert usage["used"] == {}
 
 

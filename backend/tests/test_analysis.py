@@ -294,7 +294,8 @@ async def test_without_key_only_metrics(client, session, monkeypatch):
 
 
 async def test_quota_stops_classification_and_embedding_error_is_reported(client, session):
-    acc = await register(client)  # Free: $0.5 AI в месяц
+    acc = await register(client)
+    await set_plan(acc.org_id, "free")  # Free: $0.5 AI в месяц
     src = await make_source(session, acc.org_id, [{}])
     await usage.record(session, acc.org_id, "ai_cost_usd", "test", 0.5)
     r = await analyze(acc, session, src.id)

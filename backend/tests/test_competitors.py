@@ -160,6 +160,7 @@ def h() -> str:
 
 async def test_free_plan_has_no_competitors(client):
     acc = await register(client)
+    await set_plan(acc.org_id, "free")  # Free: 0 конкурентов
     r = await acc.post("/api/v1/competitors", json={"name": "Кофе Лаб"})
     assert r.status_code == 402 and "конкуренты" in r.json()["detail"]["message"]
 

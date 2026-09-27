@@ -102,7 +102,7 @@ async def test_org_detail(client):
     await add_llm(org.org_id, 0.0, ok=False, operation="audit")
     await add_job(org.org_id)
     d = (await admin.get(ADMIN + f"/organizations/{org.org_id}")).json()
-    assert d["subscription"]["effective_plan"] == "free"
+    assert d["subscription"]["effective_plan"] == "starter"
     assert d["members"][0]["email"] == org.email and d["members"][0]["role"] == "owner"
     assert d["jobs"][0]["retryable"] is True
     assert d["ai_by_operation"][0]["key"] == "audit" and d["ai_by_operation"][0]["calls"] == 2
@@ -114,7 +114,7 @@ async def test_org_detail(client):
 async def test_manual_plan_change_applies_to_quotas(client):
     admin = await superadmin(client)
     org = await register(client, "Клиент")
-    # Free: 1 участник — приглашение упирается в лимит
+    await set_plan(org.org_id, "free")  # Free: 1 участник — приглашение упирается в лимит
     r = await org.post("/api/v1/organizations/current/invitations", json={"email": "a@example.com"})
     assert r.status_code == 402
 
@@ -134,12 +134,12 @@ async def test_manual_plan_change_applies_to_quotas(client):
     assert r.json()["limits"]["competitors"] == 0 and r.json()["limits"]["sources"] is None
     assert (await org.post("/api/v1/competitors", json={"name": "X"})).status_code == 402
 
-    # срок истёк — организация снова на Free
+    # срок истёк — организация снова на тарифе по умолчанию (Starter)
     past = (utcnow() - timedelta(days=1)).isoformat()
     r = await admin.put(ADMIN + f"/organizations/{org.org_id}/subscription",
                         json={"plan_code": "agency", "current_period_end": past})
-    assert r.json()["effective_plan"] == "free" and r.json()["active"] is False
-    assert (await org.get("/api/v1/billing/usage")).json()["plan"] == "free"
+    assert r.json()["effective_plan"] == "starter" and r.json()["active"] is False
+    assert (await org.get("/api/v1/billing/usage")).json()["plan"] == "starter"
 
     bad = await admin.put(ADMIN + f"/organizations/{org.org_id}/subscription", json={"plan_code": "gold"})
     assert bad.status_code == 422

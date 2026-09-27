@@ -30,7 +30,7 @@ def month_start() -> datetime:
 
 
 def is_active(sub: Subscription | None) -> bool:
-    """Действует ли подписка: статус active и срок (если задан) не истёк. Иначе организация на Free."""
+    """Действует ли подписка: статус active и срок (если задан) не истёк. Иначе — тариф по умолчанию."""
     return bool(sub and sub.status == "active"
                 and (sub.current_period_end is None or sub.current_period_end > datetime.now(UTC)))
 

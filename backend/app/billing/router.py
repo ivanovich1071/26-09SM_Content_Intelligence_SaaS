@@ -22,7 +22,7 @@ class PlanOut(BaseModel):
 
 class UsageOut(BaseModel):
     plan: str
-    plan_until: datetime | None = None  # тариф назначен до этой даты, потом — Free
+    plan_until: datetime | None = None  # тариф назначен до этой даты, потом — тариф по умолчанию
     period_start: str
     limits: dict
     used: dict[str, float]
